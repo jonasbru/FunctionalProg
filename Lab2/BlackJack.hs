@@ -18,8 +18,9 @@ empty :: Hand
 empty = Empty
 
 
-value :: Hand → Integer
+value :: Hand -> Integer
 value Empty = 0
+value (Add c h) = (valueCard c) + value h
 
 
 valueRank :: Rank -> Integer
@@ -28,11 +29,12 @@ valueRank Ace	= 11
 valueRank otherwise = 10
 
 valueCard :: Card -> Integer
-
+valueCard c = valueRank (rank c)
 
 numberOfAces :: Hand -> Integer
-numberOfAces Empty  = 0
+numberOfAces Empty = 0
 numberOfAces (Add card hand)
-	| rank card == 11 = 1 + numberOfAces(Hand)
-	| otherwise = numberOfAces(Hand)
+	| rank card == Ace = 1 + numberOfAces(hand)
+	| otherwise = numberOfAces(hand)
+
 
