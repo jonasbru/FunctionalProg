@@ -18,15 +18,16 @@ empty :: Hand
 empty = Empty
 
 
-value :: Hand → Integer
+value :: Hand -> Integer
 value Empty = 0
+value (Add c h) = (valueCard c) + value h
 
 
 valueRank :: Rank -> Integer
 
 
 valueCard :: Card -> Integer
+valueCard c = valueRank (rank c)
 
-
-numberOfAces :: Hand -> Integer
+--numberOfAces :: Hand -> Integer
 
