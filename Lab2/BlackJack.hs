@@ -43,6 +43,8 @@ numberOfAces (Add card hand)
 	| rank card == Ace = 1 + numberOfAces(hand)
 	| otherwise = numberOfAces(hand)
 
+gameOver :: Hand -> Bool
+gameOver hand =	value hand > 11
 
 
 winner :: Hand → Hand → Player
