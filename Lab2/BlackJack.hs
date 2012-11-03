@@ -44,3 +44,39 @@ numberOfAces (Add card hand)
 	| otherwise = numberOfAces(hand)
 
 
+
+winner :: Hand → Hand → Player
+winner hPlayer hBank 	| gameOver hPlayer || (not (gameOver hBank) && vhb >= vhp) = Bank
+						| otherwise = Guest
+	where	vhp = value hPlayer;
+			vhb = value hBank
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
