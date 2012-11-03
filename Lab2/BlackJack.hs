@@ -10,3 +10,23 @@
 							= 2
 -}
 
+module BlackJack where
+import Cards
+import Wrapper
+
+empty :: Hand
+empty = Empty
+
+
+value :: Hand → Integer
+value Empty = 0
+
+
+valueRank :: Rank -> Integer
+
+
+valueCard :: Card -> Integer
+
+
+numberOfAces :: Hand -> Integer
+
