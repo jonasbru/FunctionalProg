@@ -23,7 +23,9 @@ value Empty = 0
 
 
 valueRank :: Rank -> Integer
-
+valueRank (Numeric x) = x 
+valueRank Ace	= 11
+valueRank otherwise = 10
 
 valueCard :: Card -> Integer
 
