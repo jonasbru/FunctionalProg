@@ -19,8 +19,14 @@ empty = Empty
 
 
 value :: Hand -> Integer
-value Empty = 0
-value (Add c h) = (valueCard c) + value h
+value h | rv <= 21 || na == 0 = rv
+		| otherwise = rv - (na * 10) 
+	where rv = rawValue h;
+		  na = numberOfAces h
+
+rawValue :: Hand -> Integer
+rawValue Empty = 0
+rawValue (Add c h) = (valueCard c) + rawValue h
 
 
 valueRank :: Rank -> Integer
@@ -31,5 +37,5 @@ valueRank otherwise = 10
 valueCard :: Card -> Integer
 valueCard c = valueRank (rank c)
 
---numberOfAces :: Hand -> Integer
+numberOfAces :: Hand -> Integer
 
