@@ -31,4 +31,8 @@ valueCard :: Card -> Integer
 
 
 numberOfAces :: Hand -> Integer
+numberOfAces Empty  = 0
+numberOfAces (Add card hand)
+	| rank card == 11 = 1 + numberOfAces(Hand)
+	| otherwise = numberOfAces(Hand)
 
