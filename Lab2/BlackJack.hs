@@ -33,7 +33,7 @@ empty = Empty
 
 --Value of a hand, with aces value 1 or 11 depending on the hand value
 value :: Hand -> Integer
-value h | rv <= 21 || na == 0 = rv
+value h | rv <= 21 = rv
 		| otherwise = rv - (na * 10) 
 	where rv = value' h;
 		  na = numberOfAces h
