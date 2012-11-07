@@ -31,16 +31,17 @@ hand4 = Add (Card Jack Hearts) (Add (Card Jack Spades)              --value 30
 empty :: Hand
 empty = Empty
 
-
+--Value of a hand, with aces value 1 or 11 depending on the hand value
 value :: Hand -> Integer
 value h | rv <= 21 || na == 0 = rv
 		| otherwise = rv - (na * 10) 
 	where rv = rawValue h;
 		  na = numberOfAces h
 
-rawValue :: Hand -> Integer
-rawValue Empty = 0
-rawValue (Add c h) = valueCard c + rawValue h
+--Returns the value of the hand where all the aces have a value of 11.
+value' :: Hand -> Integer
+value' Empty = 0
+value' (Add c h) = valueCard c + value' h
 
 
 valueRank :: Rank -> Integer
@@ -63,7 +64,8 @@ numberOfAces (Add card hand)
 gameOver :: Hand -> Bool
 gameOver hand =	value hand > 21
 
-
+--The player wins if player <=21 and player > bank
+--	or bank > 21 and player < 21
 winner :: Hand -> Hand -> Player
 winner hPlayer hBank 
 	| gameOver hPlayer || (not (gameOver hBank) && vhb >= vhp) = Bank
@@ -71,12 +73,12 @@ winner hPlayer hBank
 	where	vhp = value hPlayer;
 			vhb = value hBank
 
-
+--Merges two hands
 (<+) :: Hand -> Hand -> Hand
 (<+) Empty h2      = h2
 (<+) (Add c h1) h2 = Add c (h1 <+ h2)
 
-
+--Returns a hand with the 52 different cards
 fullDeck :: Hand
 fullDeck = fullSuit Hearts <+ fullSuit Spades 
 			<+ fullSuit Diamonds <+ fullSuit Clubs
@@ -90,24 +92,25 @@ fullSuit s = Add (Card Ace s) (Add (Card (Numeric 2) s)
 	(Add (Card Jack s) (Add (Card Queen s) 
 	(Add (Card King s) Empty))))))))))))
 	
-
+--Passes the top card from the 1rst hand to the 2nd one
 draw :: Hand -> Hand -> (Hand, Hand)
 draw Empty _ = error "draw: The deck is empty."
 draw (Add card deck) hand = (deck, Add card hand)
 
+--Plays the bank. Draws cards until value >= 16
 playBank :: Hand -> Hand
 playBank deck = bankHand'
 	where (deck', bankHand') = playBank' deck Empty
 
 playBank' :: Hand -> Hand -> (Hand, Hand)
 playBank' deck bankHand 
-	| gameOver bankHand || value bankHand >= 16 = (deck, bankHand)
+	| value bankHand >= 16 = (deck, bankHand)
 	| otherwise	= playBank' deck' bankHand'
 	where (deck', bankHand') = draw deck bankHand
 
+
 shuffle :: StdGen -> Hand -> Hand
 shuffle g hand = shuffle' g hand Empty
-
 
 shuffle' :: StdGen -> Hand -> Hand -> Hand
 shuffle' _ Empty hand2 = hand2
@@ -131,13 +134,15 @@ getNCard' hand1 (Add c hand2) n
 
 
 --Props----------------------------------------------------------------------
+
+--Checks the <+ operator
 prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
 prop_onTopOf_assoc p1 p2 p3 = p1 <+ (p2 <+ p3 ) == (p1 <+ p2 ) <+ p3
 
 prop_size_onTopOf :: Hand -> Hand -> Bool
 prop_size_onTopOf p1 p2 = size p1 + size p2 == size (p1 <+ p2) 
 
-
+--Checks shuffle
 prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
 prop_shuffle_sameCards g c h =
 	c `belongsTo` h == c `belongsTo` shuffle g h
