@@ -35,7 +35,7 @@ empty = Empty
 value :: Hand -> Integer
 value h | rv <= 21 || na == 0 = rv
 		| otherwise = rv - (na * 10) 
-	where rv = rawValue h;
+	where rv = value' h;
 		  na = numberOfAces h
 
 --Returns the value of the hand where all the aces have a value of 11.
