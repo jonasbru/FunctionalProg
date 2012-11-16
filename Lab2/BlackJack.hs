@@ -152,7 +152,7 @@ c `belongsTo` Empty	= False
 c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
 
 prop_size_shuffle :: StdGen -> Hand -> Bool
-prop_size_shuffle g h = size h == size (shuffle (mkStdGen 10) h)
+prop_size_shuffle g h = size h == size (shuffle (mkStdGen g) h)
 
 
 --Interface and main method--------------------------------------------------
