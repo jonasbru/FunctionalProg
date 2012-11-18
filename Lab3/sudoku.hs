@@ -2,6 +2,7 @@ module Sudoku where
 
 import Test.QuickCheck
 import Data.Char
+
 -------------------------------------------------------------------------
 
 data Sudoku = Sudoku { rows :: [[Maybe Int]] }
@@ -44,7 +45,21 @@ toString Nothing = "."
 -- readSudoku file reads from the file, and either delivers it, or stops
 -- if the file did not contain a sudoku
 readSudoku :: FilePath -> IO Sudoku
-readSudoku = undefined
+readSudoku file = do 
+	g <- readFile file
+	return (Sudoku [map transformLine p | p <- lines g])
+	
+transformLine :: Char -> Maybe Int
+transformLine '.' = Nothing
+transformLine c = Just (digitToInt c)
+
+
+
+--caca :: [Char] -> [Maybe Int]
+--caca [] = []
+--caca ['.':s] = [Nothing : caca s]
+--caca ['.' : s] = Nothing ++ (caca s)
+--caca [x:s] = [ord x : caca s]
 
 -------------------------------------------------------------------------
 
