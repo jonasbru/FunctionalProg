@@ -1,7 +1,7 @@
 module Sudoku where
 
 import Test.QuickCheck
-
+import Data.Char
 -------------------------------------------------------------------------
 
 data Sudoku = Sudoku { rows :: [[Maybe Int]] }
@@ -31,7 +31,15 @@ isSolved s = all (\v -> v /= Nothing) (concat (rows s))
 
 -- printSudoku sud prints a representation of the sudoku sud on the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku = undefined
+printSudoku xs =
+	sequence_ (map putStrLn lines)
+	where lines = [listToString line
+			|line <- (rows xs) ]
+
+listToString list = foldr (++) [] [ b | b <- map toString list]
+
+toString (Just a) = show a
+toString Nothing = "."
 
 -- readSudoku file reads from the file, and either delivers it, or stops
 -- if the file did not contain a sudoku
