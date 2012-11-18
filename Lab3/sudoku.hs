@@ -18,7 +18,9 @@ isSudoku = undefined
 
 -- isSolved sud checks if sud is already solved, i.e. there are no blanks
 isSolved :: Sudoku -> Bool
-isSolved = undefined
+isSolved s = all (\v -> v /= Nothing) (concat (rows s))
+
+
 
 -------------------------------------------------------------------------
 
