@@ -14,7 +14,12 @@ allBlankSudoku = Sudoku [ [ Nothing | i <- [1..9] ]  | j <- [1..9] ]
 -- isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
 isSudoku :: Sudoku -> Bool
-isSudoku = undefined
+isSudoku sudok = length (rows sudok) == 9 
+									&& all (\row -> length row == 9) (rows sudok) --check the length of each row
+									&& all isValid (concat (rows sudok)) -- check values
+									
+isValid (Just a) = (a < 10 && a > 0)
+isValid Nothing = True
 
 -- isSolved sud checks if sud is already solved, i.e. there are no blanks
 isSolved :: Sudoku -> Bool
