@@ -2,6 +2,7 @@ module Sudoku where
 
 import Test.QuickCheck
 import Data.Char
+import Data.List
 
 --A-----------------------------------------------------------------------
 
@@ -70,8 +71,31 @@ prop_Sudoku s = isSudoku s
 
 --D-----------------------------------------------------------------------
 
+type Block = [Maybe Int]
 
+-- Returns true if a block doesn't contain twice the same digit
+isOkayBlock :: Block -> Bool
+isOkayBlock b = length b == length (nubBy eqOnlyInt b)
+	where eqOnlyInt c1 c2 = c1 /= Nothing && c2 /= Nothing && c1 == c2
 
+-- Returns all the blocks from a sudoku (27 blocks)
+blocks :: Sudoku -> [Block]
+blocks s = (rows s) ++ (blocksCols s) ++ (blocksSquares s)
+
+-- Returns all the 9 columns of the sudoku
+blocksCols :: Sudoku -> [Block]
+blocksCols s = [ [ ((rows s) !! i) !! j | j <- [0..8] ] | i <- [0..8] ]
+
+-- Returns all the 3x3 blocks
+blocksSquares :: Sudoku -> [Block]
+blocksSquares s = [ [ ((rows s) !! (i*3 + k)) !! (j*3 + l) | k <- [0..2], l <- [0..2] ] | i <- [0..2], j <- [0..2] ]
+
+-- Checks that there are 27 blocks of 9 cases each
+prop_sizeBlocks :: Sudoku -> Bool
+prop_sizeBlocks s = 
+	length b == 3*9
+	&& and (map (\v -> length v == 9) b)
+	where b = blocks s
 
 -------------------------------------------------------------------------
 
