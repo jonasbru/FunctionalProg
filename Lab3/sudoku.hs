@@ -26,8 +26,6 @@ isValid Nothing = True
 isSolved :: Sudoku -> Bool
 isSolved s = all (\v -> v /= Nothing) (concat (rows s))
 
-
-
 -------------------------------------------------------------------------
 
 -- printSudoku sud prints a representation of the sudoku sud on the screen
@@ -65,7 +63,12 @@ transformLine c = Just (digitToInt c)
 
 -- cell generates an arbitrary cell in a Sudoku
 cell :: Gen (Maybe Int)
-cell = undefined
+cell = frequency
+				[(9, return Nothing),
+				(1, do 
+							r<-(choose(1,9) :: Gen Int) 
+							return (Just r))]
+
 
 -- an instance for generating Arbitrary Sudokus
 instance Arbitrary Sudoku where
