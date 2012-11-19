@@ -3,7 +3,7 @@ module Sudoku where
 import Test.QuickCheck
 import Data.Char
 
--------------------------------------------------------------------------
+--A-----------------------------------------------------------------------
 
 data Sudoku = Sudoku { rows :: [[Maybe Int]] }
  deriving ( Show, Eq )
@@ -28,7 +28,7 @@ isSolved s = all (\v -> v /= Nothing) (concat (rows s))
 
 
 
--------------------------------------------------------------------------
+--B-----------------------------------------------------------------------
 
 -- printSudoku sud prints a representation of the sudoku sud on the screen
 printSudoku :: Sudoku -> IO ()
@@ -53,15 +53,7 @@ transformLine :: Char -> Maybe Int
 transformLine '.' = Nothing
 transformLine c = Just (digitToInt c)
 
-
-
---caca :: [Char] -> [Maybe Int]
---caca [] = []
---caca ['.':s] = [Nothing : caca s]
---caca ['.' : s] = Nothing ++ (caca s)
---caca [x:s] = [ord x : caca s]
-
--------------------------------------------------------------------------
+--C-----------------------------------------------------------------------
 
 -- cell generates an arbitrary cell in a Sudoku
 cell :: Gen (Maybe Int)
@@ -72,6 +64,14 @@ instance Arbitrary Sudoku where
   arbitrary =
     do rows <- sequence [ sequence [ cell | j <- [1..9] ] | i <- [1..9] ]
        return (Sudoku rows)
+       
+prop_Sudoku :: Sudoku -> Bool
+prop_Sudoku s = isSudoku s
+
+--D-----------------------------------------------------------------------
+
+
+
 
 -------------------------------------------------------------------------
 
