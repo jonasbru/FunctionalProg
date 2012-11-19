@@ -19,7 +19,9 @@ isSudoku :: Sudoku -> Bool
 isSudoku sudok = length (rows sudok) == 9 
 									&& all (\row -> length row == 9) (rows sudok) --check the length of each row
 									&& all isValid (concat (rows sudok)) -- check values
-									
+
+-- Check if the content of a cell is valid (integer between 1 and 9 or Nothing)
+isValid :: (Maybe Int) -> Bool									
 isValid (Just a) = (a < 10 && a > 0)
 isValid Nothing = True
 
@@ -36,8 +38,12 @@ printSudoku xs =
 	where lines = [listToString line
 			|line <- (rows xs) ]
 
+-- Convert a list of Maybe Int in a single String
+listToString :: [Maybe Int] -> String
 listToString list = foldr (++) [] [ b | b <- map toString list]
 
+-- Convert a Maybe Int in a string
+toString :: (Maybe Int) -> String
 toString (Just a) = show a
 toString Nothing = "."
 
