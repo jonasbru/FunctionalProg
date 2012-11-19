@@ -97,6 +97,9 @@ prop_sizeBlocks s =
 	&& and (map (\v -> length v == 9) b)
 	where b = blocks s
 
+isOkay :: Sudoku -> Bool
+isOkay s = and (map (\b -> isOkayBlock b) (blocks s))
+
 -------------------------------------------------------------------------
 
 -- TESTS
