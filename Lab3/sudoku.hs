@@ -3,6 +3,7 @@ module Sudoku where
 import Test.QuickCheck
 import Data.Char
 import Data.List
+import System.Exit
 
 --A-----------------------------------------------------------------------
 
@@ -16,9 +17,10 @@ allBlankSudoku = Sudoku [ [ Nothing | i <- [1..9] ]  | j <- [1..9] ]
 -- isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
 isSudoku :: Sudoku -> Bool
-isSudoku sudok = length (rows sudok) == 9 
-									&& all (\row -> length row == 9) (rows sudok) --check the length of each row
-									&& all isValid (concat (rows sudok)) -- check values
+isSudoku sudok = 
+	length (rows sudok) == 9 
+		&& all (\row -> length row == 9) (rows sudok) --check the length of each row
+		&& all isValid (concat (rows sudok)) -- check values
 
 -- Check if the content of a cell is valid (integer between 1 and 9 or Nothing)
 isValid :: (Maybe Int) -> Bool									
@@ -52,8 +54,13 @@ toString Nothing = "."
 readSudoku :: FilePath -> IO Sudoku
 readSudoku file = do 
 	g <- readFile file
-	return (Sudoku [map transformLine p | p <- lines g])
-	
+	let s = Sudoku [map transformLine p | p <- lines g]
+	if isSudoku s && isOkay s
+		then return (Sudoku [map transformLine p | p <- lines g])
+		else er 
+	where er = error "Sudoku not valid !!" 
+
+-- Returns the case corresponding to the char
 transformLine :: Char -> Maybe Int
 transformLine '.' = Nothing
 transformLine c = Just (digitToInt c)
@@ -97,7 +104,9 @@ blocksCols s = [ [ ((rows s) !! i) !! j | j <- [0..8] ] | i <- [0..8] ]
 
 -- Returns all the 3x3 blocks
 blocksSquares :: Sudoku -> [Block]
-blocksSquares s = [ [ ((rows s) !! (i*3 + k)) !! (j*3 + l) | k <- [0..2], l <- [0..2] ] | i <- [0..2], j <- [0..2] ]
+blocksSquares s = 
+	[ [ ((rows s) !! (i*3 + k)) !! (j*3 + l) | k <- [0..2], l <- [0..2] ] 
+		| i <- [0..2], j <- [0..2] ]
 
 -- Checks that there are 27 blocks of 9 cases each
 prop_sizeBlocks :: Sudoku -> Bool
@@ -106,6 +115,7 @@ prop_sizeBlocks s =
 	&& and (map (\v -> length v == 9) b)
 	where b = blocks s
 
+-- True if all the blocks of the sudoku don't contain twice the same digit
 isOkay :: Sudoku -> Bool
 isOkay s = and (map (\b -> isOkayBlock b) (blocks s))
 
