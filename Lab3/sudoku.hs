@@ -1,3 +1,7 @@
+-- Functional Programming -- Lab Assignment 3A
+-- Michael Fagno && Jonas Bru
+-- The file was run through hlint without warnings.
+
 module Sudoku where
 
 import Test.QuickCheck
@@ -23,29 +27,29 @@ isSudoku sudok =
 		&& all isValid (concat (rows sudok)) -- check values
 
 -- Check if the content of a cell is valid (integer between 1 and 9 or Nothing)
-isValid :: (Maybe Int) -> Bool									
-isValid (Just a) = (a < 10 && a > 0)
+isValid :: Maybe Int -> Bool									
+isValid (Just a) = a < 10 && a > 0
 isValid Nothing = True
 
 -- isSolved sud checks if sud is already solved, i.e. there are no blanks
 isSolved :: Sudoku -> Bool
-isSolved s = all (\v -> v /= Nothing) (concat (rows s))
+isSolved s = all (/= Nothing) (concat (rows s))
 
 --B-----------------------------------------------------------------------
 
 -- printSudoku sud prints a representation of the sudoku sud on the screen
 printSudoku :: Sudoku -> IO ()
 printSudoku xs =
-	sequence_ (map putStrLn lines)
+	mapM_ putStrLn lines
 	where lines = [listToString line
-			|line <- (rows xs) ]
+			|line <- rows xs ]
 
 -- Convert a list of Maybe Int in a single String
 listToString :: [Maybe Int] -> String
-listToString list = foldr (++) [] [ b | b <- map toString list]
+listToString list = concat [ b | b <- map toString list]
 
 -- Convert a Maybe Int in a string
-toString :: (Maybe Int) -> String
+toString :: Maybe Int -> String
 toString (Just a) = show a
 toString Nothing = "."
 
@@ -83,7 +87,7 @@ instance Arbitrary Sudoku where
        return (Sudoku rows)
        
 prop_Sudoku :: Sudoku -> Bool
-prop_Sudoku s = isSudoku s
+prop_Sudoku = isSudoku
 
 --D-----------------------------------------------------------------------
 
@@ -96,28 +100,28 @@ isOkayBlock b = length b == length (nubBy eqOnlyInt b)
 
 -- Returns all the blocks from a sudoku (27 blocks)
 blocks :: Sudoku -> [Block]
-blocks s = (rows s) ++ (blocksCols s) ++ (blocksSquares s)
+blocks s = rows s ++ blocksCols s ++ blocksSquares s
 
 -- Returns all the 9 columns of the sudoku
 blocksCols :: Sudoku -> [Block]
-blocksCols s = [ [ ((rows s) !! i) !! j | j <- [0..8] ] | i <- [0..8] ]
+blocksCols s = [ [ (rows s !! i) !! j | j <- [0..8] ] | i <- [0..8] ]
 
 -- Returns all the 3x3 blocks
 blocksSquares :: Sudoku -> [Block]
 blocksSquares s = 
-	[ [ ((rows s) !! (i*3 + k)) !! (j*3 + l) | k <- [0..2], l <- [0..2] ] 
+	[ [ (rows s !! (i*3 + k)) !! (j*3 + l) | k <- [0..2], l <- [0..2] ] 
 		| i <- [0..2], j <- [0..2] ]
 
 -- Checks that there are 27 blocks of 9 cases each
 prop_sizeBlocks :: Sudoku -> Bool
 prop_sizeBlocks s = 
 	length b == 3*9
-	&& and (map (\v -> length v == 9) b)
+	&& all (\v -> length v == 9) b
 	where b = blocks s
 
 -- True if all the blocks of the sudoku don't contain twice the same digit
 isOkay :: Sudoku -> Bool
-isOkay s = and (map (\b -> isOkayBlock b) (blocks s))
+isOkay s = all isOkayBlock (blocks s)
 
 -------------------------------------------------------------------------
 
