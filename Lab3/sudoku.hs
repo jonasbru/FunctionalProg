@@ -187,15 +187,16 @@ solve sud = if isSudoku sud && isOkay sud
 
 solve' :: Sudoku -> Maybe Sudoku
 solve' sud = case blanks sud of
-							[] -> Just sud
-							pos:q -> testCandidates (candidates sud pos) sud pos
+							[] -> trace ("s':No More blank ") Just sud
+							pos:q -> trace ("s':blank " ++ show pos ++ "cases left: " ++ show (length (pos:q))) testCandidates (candidates sud pos) sud pos
 							
 testCandidates :: [Int] -> Sudoku -> Pos -> Maybe Sudoku
 testCandidates (candidate:otherCand) sud pos=	
-	case solve' (update sud pos (Just candidate)) of
-		Nothing -> trace ("Try Other Candidate") testCandidates otherCand sud pos-- Try an other candidate
-		sudokuSolved ->	trace "Found" sudokuSolved -- Done										
-testCandidates [] _ _ = Nothing
+	trace ("tc:testCandidates " ++ show  pos ++ " Values: " ++ show (candidate:otherCand)) 
+	(case solve' (update sud pos (Just candidate)) of
+		Nothing -> trace ("tc:Bad Candidate " ++ show  pos ++ " Value: " ++ show candidate) testCandidates otherCand sud pos-- Try an other candidate
+		sudokuSolved ->	trace "tc:Found" sudokuSolved )-- Done										
+testCandidates [] _ _ = trace ("tc:NOTHING" ) Nothing
 
 -- Reads, solves, and prints a sudoku
 readAndSolve :: FilePath -> IO ()
@@ -230,3 +231,50 @@ example =
       , [Nothing,Just 8, Just 3, Nothing,Nothing,Nothing,Nothing,Just 6, Nothing]
       , [Nothing,Nothing,Just 7, Just 6, Just 9, Nothing,Nothing,Just 4, Just 3]
       ]
+{-
+  364871295
+  752936184
+  819254736
+  596713428
+  431582679
+  278469351
+  645328917
+  983147562
+  127695843
+-}
+example2 =
+    Sudoku
+      [ [Just 1,Just 2,Just 3,Nothing,Just 5,Just 6,Just 7,Nothing,Nothing]
+      , [Just 4,Just 5,Just 6,Just 7,Just 8,Just 9,Just 1,Just 2,Just 3]
+      , [Just 7,Just 8,Just 9,Just 1,Just 2,Just 3,Just 4,Just 5,Just 6]
+      , [Just 2,Just 1,Just 4,Just 3,Just 6,Just 5,Just 8,Just 9,Just 7]
+      , [Just 3,Just 6,Just 5,Just 8,Just 9,Just 7,Just 2,Just 1,Just 4]
+      , [Just 8,Just 9,Just 7,Just 2,Just 1,Just 4,Just 3,Just 6,Just 5]
+      , [Just 5,Just 3,Just 1,Just 6,Just 4,Just 2,Just 9,Just 7,Just 8]
+      , [Just 6,Just 4,Just 2,Just 9,Just 7,Just 8,Just 5,Just 3,Just 1]
+      , [Just 9,Just 7,Just 8,Just 5,Just 3,Just 1,Just 6,Just 4,Just 2]
+      ]
+example3 =
+    Sudoku
+      [ [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+      , [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+      , [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+      , [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+      , [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+      , [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+      , [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]
+      , [Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Just 1]
+      , [Just 9,Just 7,Just 8,Just 5,Just 3,Just 1,Just 6,Just 4,Just 2]
+      ]
+{-
+123456789
+456789123
+789123456
+214365897
+365897214
+897214365
+531642978
+642978531
+978531642
+-}
+
