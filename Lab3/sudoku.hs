@@ -203,10 +203,13 @@ readAndSolve file = do
 	s <- readSudoku file  
 	printSudoku (fromJust (solve s))
 
-
+-- True if the first sudoku is a solution of the second one
 isSolutionOf :: Sudoku -> Sudoku -> Bool
-isSolutionOf = undefined
-
+isSolutionOf s1 s2 
+	| not (isSudoku s1 && isOkay s1 && blanks s1 == []) = False
+	| otherwise = all (\(a,b) -> a `plop` b) (zip (rows s1) (rows s2))
+	where eqOnlyInt (c1, c2) = c1 == Nothing || c2 == Nothing || c1 == c2;
+		  plop a b = all eqOnlyInt (zip a b)
 
 prop_SolveSound :: Sudoku -> Property
 prop_SolveSound = undefined
