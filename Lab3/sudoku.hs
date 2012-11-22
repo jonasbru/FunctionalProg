@@ -8,6 +8,7 @@ import Test.QuickCheck
 import Data.Char
 import Data.List
 import System.Exit
+import Data.Maybe
 
 --A-----------------------------------------------------------------------
 
@@ -146,7 +147,29 @@ update s (r, c) v = Sudoku (rows s !!= (r, ((rows s !! r) !!=  (c, v))))
 prop_update :: Sudoku -> Pos -> Maybe Int -> Bool 
 prop_update s (r, c) v = rows s' !! r !! c == v
 	where s' = update s (r,c) v
+	
+-- Returns all the valid numbers of a Pos
+candidates :: Sudoku -> Pos -> [Int]
+candidates s (r,c) 
+	| rows s !! r !! c /= Nothing = error "Case not empty !!"
+	| otherwise = [1..9] \\ (catMaybes (gimmeMyNumbers s (r,c)))
 
+-- Given a position, returns the 3 blocks of the position
+gimmeMyBlocks :: Sudoku -> Pos -> [Block]
+gimmeMyBlocks s (r,c) = [(rows s !! r)] ++
+	 [[ (rows s !! i) !! c | i <- [0..8] ]] ++
+	 [[ (rows s !! ((c `div` 3) * 3 + k)) !! ((r `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]]
+	 
+-- Given a position, returns the different numbers on the blocks from the pos
+gimmeMyNumbers :: Sudoku -> Pos -> Block
+gimmeMyNumbers s (r,c) = (rows s !! r) `union`
+	 [ (rows s !! i) !! c | i <- [0..8] ] `union`
+	 [ (rows s !! ((c `div` 3) * 3 + k)) !! ((r `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]
+	 
+prop_candidates :: Sudoku -> Pos -> Bool
+prop_candidates s p = all testSudoku (candidates s p)
+	where testSudoku = \i -> isSudoku (update s p (Just i)) 
+							&& isOkay (update s p (Just i))
 
 -------------------------------------------------------------------------
 
