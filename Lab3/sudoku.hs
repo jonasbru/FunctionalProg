@@ -171,10 +171,32 @@ gimmeMyNumbers s (r,c) = (rows s !! r) `union`
 	 [ (rows s !! i) !! c | i <- [0..8] ] `union`
 	 [ (rows s !! ((c `div` 3) * 3 + k)) !! ((r `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]
 	 
+-- Tests that the candidates are valid
 prop_candidates :: Sudoku -> Pos -> Bool
 prop_candidates s p = all testSudoku (candidates s p)
 	where testSudoku = \i -> isSudoku (update s p (Just i)) 
-							&& isOkay (update s p (Just i))
+							&& isOkay (update s p (Just i));
+
+--F-----------------------------------------------------------------------
+
+
+solve :: Sudoku -> Maybe Sudoku
+solve = undefined
+
+-- Reads, solves, and prints a sudoku
+readAndSolve :: FilePath -> IO ()
+readAndSolve file = do 
+	s <- readSudoku file  
+	printSudoku (fromJust (solve s))
+
+
+isSolutionOf :: Sudoku -> Sudoku -> Bool
+isSolutionOf = undefined
+
+
+prop_SolveSound :: Sudoku -> Property
+prop_SolveSound = undefined
+
 
 -------------------------------------------------------------------------
 
