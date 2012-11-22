@@ -123,7 +123,14 @@ prop_sizeBlocks s =
 isOkay :: Sudoku -> Bool
 isOkay s = all isOkayBlock (blocks s)
 
+--E-----------------------------------------------------------------------
+type Pos = (Int,Int)
+
+blanks :: Sudoku -> [Pos]
+blanks = undefined
 -------------------------------------------------------------------------
+
+
 
 -- TESTS
 example :: Sudoku
