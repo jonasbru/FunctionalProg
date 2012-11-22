@@ -2,7 +2,7 @@
 -- Michael Fagno && Jonas Bru
 -- The file was run through hlint without warnings.
 
-module Sudoku where
+module Main where
 
 import Test.QuickCheck
 import Data.Char
@@ -10,6 +10,7 @@ import Data.List
 import System.Exit
 import Data.Maybe
 import Debug.Trace
+import System.Environment
 
 --A-----------------------------------------------------------------------
 
@@ -216,6 +217,9 @@ prop_SolveSound :: Sudoku -> Property
 prop_SolveSound = undefined
 
 -------------------------------------------------------------------------
+
+main :: IO ()
+main = (readAndSolve "sudoku.txt")
 
 -- TESTS
 example :: Sudoku
