@@ -164,7 +164,7 @@ candidates s (r,c)
 gimmeMyBlocks :: Sudoku -> Pos -> [Block]
 gimmeMyBlocks s (r,c) = [(rows s !! r)] ++
 	 [[ (rows s !! i) !! c | i <- [0..8] ]] ++
-	 [[ (rows s !! ((c `div` 3) * 3 + k)) !! ((r `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]]
+	 [[ (rows s !! ((r `div` 3) * 3 + k)) !! ((c `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]]
 	 
 -- Given a position, returns the different numbers on the blocks from the pos
 gimmeMyNumbers :: Sudoku -> Pos -> Block
