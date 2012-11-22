@@ -152,7 +152,28 @@ prop_update :: Sudoku -> Pos -> Maybe Int -> Bool
 prop_update s (r, c) v = rows s' !! r !! c == v
 	where s' = update s (r,c) v
 
+candidates :: Sudoku -> Pos -> [Int]
+candidates = undefined
+--F-----------------------------------------------------------------------
+solve :: Sudoku -> Maybe Sudoku
+solve sud = if isSudoku sud && isOkay sud 						
+								then solve' sud
+								else Nothing
 
+solve' :: Sudoku -> Maybe Sudoku
+solve' sud = case blanks sud of
+							[] -> Just sud
+							pos:q -> testCandidates (candidates sud pos) sud pos																																								
+
+testCandidates :: [Int] -> Sudoku -> Pos -> Maybe Sudoku
+testCandidates (candidate:otherCand) sud pos=	case solve' (update sud pos (Just candidate)) of
+																								Nothing -> 	testCandidates otherCand sud pos-- Try an other candidate
+																								sudokuSolved -> sudokuSolved -- Done				
+testCandidates [] _ _ = Nothing
+
+--fromJust    :: Maybe a -> a
+--listToMaybe :: [a] -> Maybe a
+--catMaybes   :: [Maybe a] -> [a]
 -------------------------------------------------------------------------
 
 -- TESTS
