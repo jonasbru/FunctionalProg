@@ -123,7 +123,15 @@ prop_sizeBlocks s =
 isOkay :: Sudoku -> Bool
 isOkay s = all isOkayBlock (blocks s)
 
--------------------------------------------------------------------------
+--E-----------------------------------------------------------------------
+
+
+
+(!!=) :: [a] -> (Int,a) -> [a]
+(!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
+				| i < 0 = error "Negative index !!"
+				| otherwise = take (i) l ++ [el] ++ drop (i+1) l
+
 
 -- TESTS
 example :: Sudoku
