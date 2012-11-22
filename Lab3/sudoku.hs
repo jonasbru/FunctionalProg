@@ -181,23 +181,29 @@ prop_candidates s p = all testSudoku (candidates s p)
 
 --F-----------------------------------------------------------------------
 
+--Solve a sudoku
 solve :: Sudoku -> Maybe Sudoku
 solve sud = if isSudoku sud && isOkay sud 						
 								then solve' sud
 								else Nothing
 
+-- Try to solve a sudoku
 solve' :: Sudoku -> Maybe Sudoku
-solve' sud = case blanks sud of
-							[] -> trace ("s':No More blank ") Just sud
-							pos:q -> trace ("s':blank " ++ show pos ++ "cases left: " ++ show (length (pos:q))) testCandidates (candidates sud pos) sud pos
-							
+solve' sud = 
+	case blanks sud of
+		[] -> Just sud -- return the filled sudoku
+		pos:q -> testCandidates (candidates sud pos) sud pos -- Try all candidates in pos
+
+-- Try successively all candidates in pos	cell and return a filled sudoku as 
+-- soon as one candidate match					
 testCandidates :: [Int] -> Sudoku -> Pos -> Maybe Sudoku
-testCandidates (candidate:otherCand) sud pos=	
-	trace ("tc:testCandidates " ++ show  pos ++ " Values: " ++ show (candidate:otherCand)) 
-	(case solve' (update sud pos (Just candidate)) of
-		Nothing -> trace ("tc:Bad Candidate " ++ show  pos ++ " Value: " ++ show candidate) testCandidates otherCand sud pos-- Try an other candidate
-		sudokuSolved ->	trace "tc:Found" sudokuSolved )-- Done										
-testCandidates [] _ _ = trace ("tc:NOTHING" ) Nothing
+testCandidates (candidate:otherCand) sud pos=	 
+	-- Try to solve the Sudoku with a new value (recursive call)
+	case solve' (update sud pos (Just candidate)) of 
+		Nothing -> testCandidates otherCand sud pos -- Try an other candidate
+		sudokuSolved -> sudokuSolved -- Done
+-- Impossible to solve the sudoku (we tried all candidate numbers in a cell)									
+testCandidates [] _ _ = Nothing 
 
 -- Reads, solves, and prints a sudoku
 readAndSolve :: FilePath -> IO ()
