@@ -128,8 +128,13 @@ isOkay s = all isOkayBlock (blocks s)
 
 type Pos = (Int,Int)
 
+-- Return the list of Positions where there are blanks
 blanks :: Sudoku -> [Pos]
-blanks = undefined
+blanks sudok = 
+	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
+
+prop_blanks :: Sudoku -> Bool
+prop_blanks sudok = and (map (\(r,c)->rows sudok!!(r)!!(c) == Nothing) (blanks sudok))
 
 -- Changes the element at the given position by the given element in a list.
 (!!=) :: [a] -> (Int,a) -> [a]
