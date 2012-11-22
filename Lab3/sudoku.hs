@@ -170,7 +170,7 @@ gimmeMyBlocks s (r,c) = [(rows s !! r)] ++
 gimmeMyNumbers :: Sudoku -> Pos -> Block
 gimmeMyNumbers s (r,c) = (rows s !! r) `union`
 	 [ (rows s !! i) !! c | i <- [0..8] ] `union`
-	 [ (rows s !! ((c `div` 3) * 3 + k)) !! ((r `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]
+	 [ (rows s !! ((r `div` 3) * 3 + k)) !! ((c `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]
 	 
 -- Tests that the candidates are valid
 prop_candidates :: Sudoku -> Pos -> Bool
