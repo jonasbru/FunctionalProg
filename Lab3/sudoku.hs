@@ -124,15 +124,33 @@ isOkay :: Sudoku -> Bool
 isOkay s = all isOkayBlock (blocks s)
 
 --E-----------------------------------------------------------------------
+
 type Pos = (Int,Int)
 
+-- Return the list of Positions where there are blanks
 blanks :: Sudoku -> [Pos]
 blanks sudok = 
 	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
 
+-- Changes the element at the given position by the given element in a list.
+(!!=) :: [a] -> (Int,a) -> [a]
+(!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
+				| i < 0 = error "Negative index !!"
+				| otherwise = take (i) l ++ [el] ++ drop (i+1) l
+
+prop_insert :: [Int] -> (Int, Int) -> Bool
+prop_insert l (i, el) = ((l !!= (i, el)) !! i) == el
+
+-- Replaces an element in a sudoku
+update :: Sudoku -> Pos -> Maybe Int -> Sudoku
+update s (r, c) v = Sudoku (rows s !!= (r, ((rows s !! r) !!=  (c, v))))
+
+prop_update :: Sudoku -> Pos -> Maybe Int -> Bool 
+prop_update s (r, c) v = rows s' !! r !! c == v
+	where s' = update s (r,c) v
+
+
 -------------------------------------------------------------------------
-
-
 
 -- TESTS
 example :: Sudoku
