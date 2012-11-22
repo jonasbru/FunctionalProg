@@ -9,6 +9,7 @@ import Data.Char
 import Data.List
 import System.Exit
 import Data.Maybe
+import Debug.Trace
 
 --A-----------------------------------------------------------------------
 
@@ -152,7 +153,7 @@ update s (r, c) v = Sudoku (rows s !!= (r, ((rows s !! r) !!=  (c, v))))
 prop_update :: Sudoku -> Pos -> Maybe Int -> Bool 
 prop_update s (r, c) v = rows s' !! r !! c == v
 	where s' = update s (r,c) v
-	
+
 -- Returns all the valid numbers of a Pos
 candidates :: Sudoku -> Pos -> [Int]
 candidates s (r,c) 
@@ -179,9 +180,22 @@ prop_candidates s p = all testSudoku (candidates s p)
 
 --F-----------------------------------------------------------------------
 
-
 solve :: Sudoku -> Maybe Sudoku
-solve = undefined
+solve sud = if isSudoku sud && isOkay sud 						
+								then solve' sud
+								else Nothing
+
+solve' :: Sudoku -> Maybe Sudoku
+solve' sud = case blanks sud of
+							[] -> Just sud
+							pos:q -> testCandidates (candidates sud pos) sud pos
+							
+testCandidates :: [Int] -> Sudoku -> Pos -> Maybe Sudoku
+testCandidates (candidate:otherCand) sud pos=	
+	case solve' (update sud pos (Just candidate)) of
+		Nothing -> trace ("Try Other Candidate") testCandidates otherCand sud pos-- Try an other candidate
+		sudokuSolved ->	trace "Found" sudokuSolved -- Done										
+testCandidates [] _ _ = Nothing
 
 -- Reads, solves, and prints a sudoku
 readAndSolve :: FilePath -> IO ()
@@ -196,7 +210,6 @@ isSolutionOf = undefined
 
 prop_SolveSound :: Sudoku -> Property
 prop_SolveSound = undefined
-
 
 -------------------------------------------------------------------------
 
