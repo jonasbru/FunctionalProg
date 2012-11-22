@@ -127,7 +127,9 @@ isOkay s = all isOkayBlock (blocks s)
 type Pos = (Int,Int)
 
 blanks :: Sudoku -> [Pos]
-blanks = undefined
+blanks sudok = 
+	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
+
 -------------------------------------------------------------------------
 
 
