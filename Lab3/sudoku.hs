@@ -125,12 +125,17 @@ isOkay s = all isOkayBlock (blocks s)
 
 --E-----------------------------------------------------------------------
 
+type Pos = (Int,Int)
 
+blanks :: Sudoku -> [Pos]
+blanks = undefined
 
+-- Changes the element at the given position by the given element in a list.
 (!!=) :: [a] -> (Int,a) -> [a]
 (!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
 				| i < 0 = error "Negative index !!"
 				| otherwise = take (i) l ++ [el] ++ drop (i+1) l
+
 
 
 -- TESTS
