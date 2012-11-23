@@ -130,13 +130,13 @@ isOkay s = all isOkayBlock (blocks s)
 type Pos = (Int,Int)
 
 --Return the list of Positions where there are blanks
---blanks :: Sudoku -> [Pos]
---blanks sudok = 
---	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
-
--- ** OPTIMIZED
 blanks :: Sudoku -> [Pos]
 blanks sudok = 
+	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
+
+-- ** OPTIMIZED
+blanks1 :: Sudoku -> [Pos]
+blanks1 sudok = 
 	map (\(_,i,j)->(i,j)) (sort (filter (\(nb,_,_)-> nb /= 0) [(nbCandidates sudok (i,j),i,j) | i<-[0..8], j<-[0..8]]))
 
 nbCandidates :: Sudoku -> Pos -> Int
@@ -146,6 +146,7 @@ nbCandidates sudok (r,c) 	| rows sudok!!(r)!!(c) == Nothing = length (candidates
 prop_blanks :: Sudoku -> Bool
 prop_blanks sudok = and (map (\(r,c)->rows sudok!!(r)!!(c) == Nothing) (blanks sudok))
 
+prop_blanks12 sudok = (blanks sudok \\ blanks1 sudok) == [] && (blanks1 sudok \\ blanks sudok) == []
 -- Changes the element at the given position by the given element in a list.
 (!!=) :: [a] -> (Int,a) -> [a]
 (!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
@@ -199,8 +200,8 @@ solve sud = if isSudoku sud && isOkay sud
 solve' :: Sudoku -> Maybe Sudoku
 solve' sud = 
 	case blanks sud of
-		[] -> Just sud -- return the filled sudoku
-		pos:q -> testCandidates (candidates sud pos) sud pos -- Try all candidates in pos
+		[] -> trace ("s': No Blanks sud:"++ show sud) Just sud -- return the filled sudoku
+		pos:q -> trace ("s': pos: " ++ show pos ++ " left: " ++ show (length (rows sud))) testCandidates (candidates sud pos) sud pos -- Try all candidates in pos
 
 -- Try successively all candidates in pos	cell and return a filled sudoku as 
 -- soon as one candidate match					
@@ -208,10 +209,10 @@ testCandidates :: [Int] -> Sudoku -> Pos -> Maybe Sudoku
 testCandidates (candidate:otherCand) sud pos=	 
 	-- Try to solve the Sudoku with a new value (recursive call)
 	case solve' (update sud pos (Just candidate)) of 
-		Nothing -> testCandidates otherCand sud pos -- Try an other candidate
-		sudokuSolved -> sudokuSolved -- Done
+		Nothing -> trace ("tc: Candidate " ++ show pos) testCandidates otherCand sud pos -- Try an other candidate
+		sudokuSolved -> trace ("tc: Solved") sudokuSolved -- Done
 -- Impossible to solve the sudoku (we tried all candidate numbers in a cell)									
-testCandidates [] _ _ = Nothing 
+testCandidates [] _ _ = trace ("tc: NoCandidates") Nothing 
 
 -- Reads, solves, and prints a sudoku
 readAndSolve :: FilePath -> IO ()
@@ -228,7 +229,7 @@ isSolutionOf s1 s2
 		  plop a b = all eqOnlyInt (zip a b)
 
 prop_SolveSound :: Sudoku -> Property
-prop_SolveSound s = x /= Nothing && isSudoku s && isOkay s ==> isSolutionOf (fromJust x) s
+prop_SolveSound s = x /= Nothing && isSudoku s && isOkay s ==> isSolutionOf (fromJust x) s && isOkay (fromJust x) && isSolved (fromJust x)
     where x = solve s
 
 fewerChecks prop = quickCheckWith stdArgs{ maxSuccess = 30 } prop
@@ -295,4 +296,6 @@ example3 =
 642978531
 978531642
 -}
+example4 = Sudoku {rows = [[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Just 3,Nothing,Just 5,Nothing,Nothing],[Nothing,Just 6,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Just 5,Nothing,Nothing,Nothing,Just 4],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Just 9,Nothing,Nothing,Nothing,Nothing,Nothing]]}
 
+bugBlanks = Sudoku {rows = [[Just 3,Just 2,Just 8,Just 4,Just 6,Just 5,Just 7,Nothing,Just 1],[Just 6,Just 5,Nothing,Just 1,Just 7,Just 9,Just 3,Just 4,Just 2],[Just 4,Just 1,Just 7,Just 2,Just 3,Just 8,Just 5,Just 9,Just 6],[Just 8,Just 6,Just 5,Just 3,Just 4,Just 2,Just 1,Just 7,Just 9],[Just 2,Just 7,Just 1,Just 5,Just 9,Just 6,Just 4,Just 8,Just 3],[Just 9,Just 4,Just 3,Just 8,Just 1,Just 7,Just 2,Just 6,Just 5],[Just 7,Just 8,Just 2,Just 6,Just 5,Just 1,Just 9,Just 3,Just 4],[Just 1,Just 9,Just 4,Just 7,Just 2,Just 3,Just 6,Just 5,Just 8],[Just 5,Just 3,Just 6,Just 9,Just 8,Just 4,Nothing,Just 1,Just 7]]}
