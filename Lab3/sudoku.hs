@@ -131,23 +131,22 @@ isOkay s = all isOkayBlock (blocks s)
 type Pos = (Int,Int)
 
 --Return the list of Positions where there are blanks
-blanks :: Sudoku -> [Pos]
-blanks sudok = 
-	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
+--blanks :: Sudoku -> [Pos]
+--blanks sudok = 
+--	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
 
 -- ** OPTIMIZED
-blanks1 :: Sudoku -> [Pos]
-blanks1 sudok = 
-	map (\(_,i,j)->(i,j)) (sort (filter (\(nb,_,_)-> nb /= 0) [(nbCandidates sudok (i,j),i,j) | i<-[0..8], j<-[0..8]]))
+blanks :: Sudoku -> [Pos]
+blanks sudok = 
+	map (\(_,i,j)->(i,j)) (sort (filter (\(nb,_,_)-> nb /= -1) [(nbCandidates sudok (i,j),i,j) | i<-[0..8], j<-[0..8]]))
 
 nbCandidates :: Sudoku -> Pos -> Int
 nbCandidates sudok (r,c) 	| rows sudok!!(r)!!(c) == Nothing = length (candidates sudok (r,c) )
-													| otherwise = 0
+													| otherwise = -1
 
 prop_blanks :: Sudoku -> Bool
 prop_blanks sudok = and (map (\(r,c)->rows sudok!!(r)!!(c) == Nothing) (blanks sudok))
 
-prop_blanks12 sudok = (blanks sudok \\ blanks1 sudok) == [] && (blanks1 sudok \\ blanks sudok) == []
 -- Changes the element at the given position by the given element in a list.
 (!!=) :: [a] -> (Int,a) -> [a]
 (!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
@@ -201,8 +200,8 @@ solve sud = if isSudoku sud && isOkay sud
 solve' :: Sudoku -> Maybe Sudoku
 solve' sud = 
 	case blanks sud of
-		[] -> trace ("s': No Blanks sud:"++ show sud) Just sud -- return the filled sudoku
-		pos:q -> trace ("s': pos: " ++ show pos ++ " left: " ++ show (length (rows sud))) testCandidates (candidates sud pos) sud pos -- Try all candidates in pos
+		[] -> Just sud -- return the filled sudoku
+		pos:q -> testCandidates (candidates sud pos) sud pos -- Try all candidates in pos
 
 -- Try successively all candidates in pos	cell and return a filled sudoku as 
 -- soon as one candidate match					
@@ -210,10 +209,10 @@ testCandidates :: [Int] -> Sudoku -> Pos -> Maybe Sudoku
 testCandidates (candidate:otherCand) sud pos=	 
 	-- Try to solve the Sudoku with a new value (recursive call)
 	case solve' (update sud pos (Just candidate)) of 
-		Nothing -> trace ("tc: Candidate " ++ show pos) testCandidates otherCand sud pos -- Try an other candidate
-		sudokuSolved -> trace ("tc: Solved") sudokuSolved -- Done
+		Nothing -> testCandidates otherCand sud pos -- Try an other candidate
+		sudokuSolved -> sudokuSolved -- Done
 -- Impossible to solve the sudoku (we tried all candidate numbers in a cell)									
-testCandidates [] _ _ = trace ("tc: NoCandidates") Nothing 
+testCandidates [] _ _ = Nothing 
 
 -- Reads, solves, and prints a sudoku
 readAndSolve :: FilePath -> IO ()
