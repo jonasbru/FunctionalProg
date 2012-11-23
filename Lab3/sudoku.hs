@@ -140,6 +140,7 @@ blanks1 :: Sudoku -> [Pos]
 blanks1 sudok = 
 	map (\(_,i,j)->(i,j)) (sort (filter (\(nb,_,_)-> nb /= 0) [(nbCandidates sudok (i,j),i,j) | i<-[0..8], j<-[0..8]]))
 
+
 nbCandidates :: Sudoku -> Pos -> Int
 nbCandidates sudok (r,c) 	| rows sudok!!(r)!!(c) == Nothing = length (candidates sudok (r,c) )
 													| otherwise = 0
@@ -197,12 +198,14 @@ solve sud = if isSudoku sud && isOkay sud
 								then solve' sud
 								else Nothing
 
--- Try to solve a sudoku
+-- ** OPTIMIZED -> replace the "(propagate sud)" by "sud" to des-optimize
+-- Try to solve a sudoku. 
 solve' :: Sudoku -> Maybe Sudoku
 solve' sud = 
-	case blanks sud of
+	case blanks (propagate sud) of
 		[] -> trace ("s': No Blanks sud:"++ show sud) Just sud -- return the filled sudoku
 		pos:q -> trace ("s': pos: " ++ show pos ++ " left: " ++ show (length (rows sud))) testCandidates (candidates sud pos) sud pos -- Try all candidates in pos
+
 
 -- Try successively all candidates in pos	cell and return a filled sudoku as 
 -- soon as one candidate match					
@@ -235,8 +238,35 @@ prop_SolveSound s = x /= Nothing && isSudoku s && isOkay s ==> isSolutionOf (fro
 
 fewerChecks prop = quickCheckWith stdArgs{ maxSuccess = 30 } prop
 
--------------------------------------------------------------------------
 
+--X-----------------------------------------------------------------------
+
+
+--Y-----------------------------------------------------------------------
+
+propagate :: Sudoku -> Sudoku
+propagate s = fst (propagateR (s, False) 0)
+
+propagateR :: (Sudoku, Bool) -> Int -> (Sudoku, Bool)
+propagateR (s,b) i 
+	| i > 8 = propagateC (s, b) (-1)
+	| otherwise = propagateR (plop (rows s !! i) (s,b) i) (i+1)
+		
+propagateC :: (Sudoku, Bool) -> Int -> (Sudoku, Bool)		
+propagateC (s,b) i 
+	| i > 8 && not b = (Sudoku (transpose (rows s)), b)
+	| i > 8 && b = propagateR (Sudoku (transpose (rows s)), False) 0 --We reparse the lines and cols
+	| i == (-1) = propagateC (Sudoku (transpose (rows s)), b) 0
+	| otherwise = propagateC (plop (rows s !! i) (s,b) i) (i+1)
+		
+plop :: Block -> (Sudoku, Bool) -> Int -> (Sudoku, Bool)
+plop r (s,b) i = 
+	if (length (elemIndices Nothing r)) == 1 
+		then (update s (i, (fromJust (elemIndex Nothing r))) (([Just j | j <- [1..9]] \\ r) !! 0), True)
+		else (s,b) 
+		
+
+-------------------------------------------------------------------------
 -- TESTS
 example :: Sudoku
 example =
@@ -268,10 +298,10 @@ example2 =
       , [Just 4,Just 5,Just 6,Just 7,Just 8,Just 9,Just 1,Just 2,Just 3]
       , [Just 7,Just 8,Just 9,Just 1,Just 2,Just 3,Just 4,Just 5,Just 6]
       , [Just 2,Just 1,Just 4,Just 3,Just 6,Just 5,Just 8,Just 9,Just 7]
-      , [Just 3,Just 6,Just 5,Just 8,Just 9,Just 7,Just 2,Just 1,Just 4]
+      , [Just 3,Just 6,Just 5,Nothing,Just 9,Just 7,Just 2,Just 1,Just 4]
       , [Just 8,Just 9,Just 7,Just 2,Just 1,Just 4,Just 3,Just 6,Just 5]
-      , [Just 5,Just 3,Just 1,Just 6,Just 4,Just 2,Just 9,Just 7,Just 8]
-      , [Just 6,Just 4,Just 2,Just 9,Just 7,Just 8,Just 5,Just 3,Just 1]
+      , [Just 5,Just 3,Just 1,Just 6,Just 4,Nothing,Just 9,Just 7,Just 8]
+      , [Just 6,Just 4,Just 2,Nothing,Just 7,Just 8,Nothing,Just 3,Just 1]
       , [Just 9,Just 7,Just 8,Just 5,Just 3,Just 1,Just 6,Just 4,Just 2]
       ]
 example3 =
