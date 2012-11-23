@@ -130,10 +130,19 @@ isOkay s = all isOkayBlock (blocks s)
 
 type Pos = (Int,Int)
 
--- Return the list of Positions where there are blanks
+--Return the list of Positions where there are blanks
+--blanks :: Sudoku -> [Pos]
+--blanks sudok = 
+--	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
+
+-- ** OPTIMIZED
 blanks :: Sudoku -> [Pos]
 blanks sudok = 
-	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
+	map (\(_,i,j)->(i,j)) (sort (filter (\(nb,_,_)-> nb /= 0) [(nbCandidates sudok (i,j),i,j) | i<-[0..8], j<-[0..8]]))
+
+nbCandidates :: Sudoku -> Pos -> Int
+nbCandidates sudok (r,c) 	| rows sudok!!(r)!!(c) == Nothing = length (candidates sudok (r,c) )
+													| otherwise = 0
 
 prop_blanks :: Sudoku -> Bool
 prop_blanks sudok = and (map (\(r,c)->rows sudok!!(r)!!(c) == Nothing) (blanks sudok))
@@ -220,7 +229,10 @@ isSolutionOf s1 s2
 		  plop a b = all eqOnlyInt (zip a b)
 
 prop_SolveSound :: Sudoku -> Property
-prop_SolveSound = undefined
+prop_SolveSound s = x /= Nothing && isSudoku s && isOkay s ==> isSolutionOf (fromJust x) s
+    where x = solve s
+
+fewerChecks prop = quickCheckWith stdArgs{ maxSuccess = 30 } prop
 
 -------------------------------------------------------------------------
 
