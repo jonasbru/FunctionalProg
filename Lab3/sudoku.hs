@@ -201,9 +201,10 @@ solve sud = if isSudoku sud && isOkay sud
 -- Try to solve a sudoku. 
 solve' :: Sudoku -> Maybe Sudoku
 solve' sud = 
-	case blanks sud of
-		[] -> Just sud -- return the filled sudoku
-		pos:q -> testCandidates (candidates sud pos) sud pos -- Try all candidates in pos
+	case blanks sud' of
+		[] -> Just sud' -- return the filled sudoku
+		pos:q -> testCandidates (candidates sud' pos) sud' pos -- Try all candidates in pos
+	where sud' = propagate sud
 
 -- Try successively all candidates in pos	cell and return a filled sudoku as 
 -- soon as one candidate match					
