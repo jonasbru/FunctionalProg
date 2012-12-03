@@ -3,6 +3,9 @@ module GOL where
 import Data.List
 import Test.QuickCheck
 import Debug.Trace
+import System.Console.ANSI
+import Control.Concurrent
+import Graphics.GD
 
 type Grid = Matrix Value
 type Matrix a = [Row a]
@@ -10,6 +13,16 @@ type Row a = [a]
 type Value = Bool
 type Point = (Int,Int)
 
+-- Micka	####################################################################
+-- create Image 	############################################################
+
+-- Loop 	####################################################################
+run grid = 	do
+							printGrid grid
+							threadDelay(1000000)
+							run (nextStep grid)
+
+-- Core #####################################################################
 -- Return the next state of a grid
 nextStep ::  Grid -> Grid
 nextStep grid = [ [ transform (x,y) grid | y <-[0..nbRows-1] ] | x <-[0..nbLines-1] ]
@@ -52,6 +65,64 @@ transform (x,y) grid	| hasToDie pt grid = False
 											| hasToBorn pt grid = True
 											| otherwise = grid!!x!!y
 												where pt = (x,y)
+-- End Core ##################################################################
 
----------------------------------------------------------------------
+-- Jonas #####################################################################
+
+
+-- Terminal print ############################################################
+printGrid :: Grid -> IO ()
+printGrid g = 
+	do 
+		clearScreen
+		mapM_ putStrLn lines
+	where lines = map listToString g
+
+listToString :: Row Value -> String
+listToString list = [b | b <- map toString list]
+
+toString :: Bool -> Char
+toString True = 'o'
+toString False = ' '
+
+-- File reader ###############################################################
+
+--readGrid :: FilePath -> IO Grid 
+{-
+readGrid file = do 
+	f <- readFile file
+	l <- lines f
+	(l0, l1) <- splitAt 1 l
+	ll <- concat l1
+	return ll 
+-}
+
+--readGrid :: FilePath -> Grid		
+{-
+readGrid file = 
+	ll
+	where
+		f = do
+			merdeuh <- readF file
+			let cacaca = merdeuh
+			return cacaca
+		l = lines f;
+		(l0, l1) = splitAt 1 l;
+		ll = concat l1
+	-}	
+readF :: FilePath -> IO String
+readF file = do 
+	p <- readFile file
+	return p
+	
+--	let s = Sudoku [map transformLine p | p <- lines g]
+	
+-- Returns the case corresponding to the char
+--transformLine :: Char -> Maybe Int
+--transformLine '.' = Nothing
+--transformLine c = Just (digitToInt c)
+
+------------------------------------------------
 example=[[False,False, False],[True,True, True],[False,False, False]]
+plop = [[True,False],[False,True]]
+plop2 = [[False,True],[True,False]]
