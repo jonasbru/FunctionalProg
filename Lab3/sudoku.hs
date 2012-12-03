@@ -1,6 +1,8 @@
 -- Functional Programming -- Lab Assignment 3A
 -- Michael Fagno && Jonas Bru
--- The file was run through hlint without warnings.
+-- The file was run through hlint without warnings 
+--     ->but one error on fewerChecks that we don't understand
+--       don't load if we apply what hlint tells us to do 
 
 module Sudoku where
 
@@ -9,7 +11,6 @@ import Data.Char
 import Data.List
 import System.Exit
 import Data.Maybe
-import Debug.Trace
 import System.Environment
 
 --A-----------------------------------------------------------------------
@@ -130,57 +131,61 @@ isOkay s = all isOkayBlock (blocks s)
 
 type Pos = (Int,Int)
 
+-- THERE IS AN OPTIMIZED VERSION OF BLANKS IN THE 'X' PART
 --Return the list of Positions where there are blanks
 --blanks :: Sudoku -> [Pos]
 --blanks sudok = 
 --	filter (\(r,c)->rows sudok!!(r)!!(c) == Nothing) [(i,j) | i<-[0..8], j<-[0..8]]
 
--- ** OPTIMIZED
-blanks :: Sudoku -> [Pos]
-blanks sudok = 
-	map (\(_,i,j)->(i,j)) (sort (filter (\(nb,_,_)-> nb /= -1) [(nbCandidates sudok (i,j),i,j) | i<-[0..8], j<-[0..8]]))
 
-nbCandidates :: Sudoku -> Pos -> Int
-nbCandidates sudok (r,c) 	| rows sudok!!(r)!!(c) == Nothing = length (candidates sudok (r,c) )
-													| otherwise = -1
-
+-- Checks that all the cells returned by blanks contain nothing 
 prop_blanks :: Sudoku -> Bool
-prop_blanks sudok = and (map (\(r,c)->rows sudok!!(r)!!(c) == Nothing) (blanks sudok))
+prop_blanks sudok = all (\ (r, c) -> rows sudok !! r !! c == Nothing) (blanks sudok)
+
 
 -- Changes the element at the given position by the given element in a list.
 (!!=) :: [a] -> (Int,a) -> [a]
 (!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
 				| i < 0 = error "Negative index !!"
-				| otherwise = take (i) l ++ [el] ++ drop (i+1) l
+				| otherwise = take i l ++ [el] ++ drop (i+1) l
 
+
+-- Checks that !!= really changes the element
 prop_insert :: [Int] -> (Int, Int) -> Bool
 prop_insert l (i, el) = ((l !!= (i, el)) !! i) == el
 
+
 -- Replaces an element in a sudoku
 update :: Sudoku -> Pos -> Maybe Int -> Sudoku
-update s (r, c) v = Sudoku (rows s !!= (r, ((rows s !! r) !!=  (c, v))))
+update s (r, c) v = Sudoku (rows s !!= (r, (rows s !! r) !!= (c, v)))
 
+
+-- Checks that update works..
 prop_update :: Sudoku -> Pos -> Maybe Int -> Bool 
 prop_update s (r, c) v = rows s' !! r !! c == v
 	where s' = update s (r,c) v
+
 
 -- Returns all the valid numbers of a Pos
 candidates :: Sudoku -> Pos -> [Int]
 candidates s (r,c) 
 	| rows s !! r !! c /= Nothing = error "Case not empty !!"
-	| otherwise = [1..9] \\ (catMaybes (gimmeMyNumbers s (r,c)))
+	| otherwise = [1..9] \\ catMaybes (gimmeMyNumbers s (r,c))
+
 
 -- Given a position, returns the 3 blocks of the position
 gimmeMyBlocks :: Sudoku -> Pos -> [Block]
-gimmeMyBlocks s (r,c) = [(rows s !! r)] ++
+gimmeMyBlocks s (r,c) = [rows s !! r] ++
 	 [[ (rows s !! i) !! c | i <- [0..8] ]] ++
 	 [[ (rows s !! ((r `div` 3) * 3 + k)) !! ((c `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]]
+	 
 	 
 -- Given a position, returns the different numbers on the blocks from the pos
 gimmeMyNumbers :: Sudoku -> Pos -> Block
 gimmeMyNumbers s (r,c) = (rows s !! r) `union`
 	 [ (rows s !! i) !! c | i <- [0..8] ] `union`
 	 [ (rows s !! ((r `div` 3) * 3 + k)) !! ((c `div` 3) * 3 + l) | k <- [0..2], l <- [0..2] ]
+	 
 	 
 -- Tests that the candidates are valid
 prop_candidates :: Sudoku -> Pos -> Bool
@@ -196,12 +201,15 @@ solve sud = if isSudoku sud && isOkay sud
 								then solve' sud
 								else Nothing
 
--- Try to solve a sudoku
+-- ** OPTIMIZED -> replace the "propagate sud" by "sud" to des-optimize
+-- Try to solve a sudoku. 
 solve' :: Sudoku -> Maybe Sudoku
 solve' sud = 
-	case blanks sud of
-		[] -> Just sud -- return the filled sudoku
-		pos:q -> testCandidates (candidates sud pos) sud pos -- Try all candidates in pos
+	case blanks sud' of
+		[] -> Just sud' -- return the filled sudoku
+		pos:q -> testCandidates (candidates sud' pos) sud' pos -- Try all candidates in pos
+	where sud' = propagate sud
+
 
 -- Try successively all candidates in pos	cell and return a filled sudoku as 
 -- soon as one candidate match					
@@ -214,28 +222,74 @@ testCandidates (candidate:otherCand) sud pos=
 -- Impossible to solve the sudoku (we tried all candidate numbers in a cell)									
 testCandidates [] _ _ = Nothing 
 
+
 -- Reads, solves, and prints a sudoku
 readAndSolve :: FilePath -> IO ()
 readAndSolve file = do 
 	s <- readSudoku file  
 	printSudoku (fromJust (solve s))
 
+
 -- True if the first sudoku is a solution of the second one
 isSolutionOf :: Sudoku -> Sudoku -> Bool
 isSolutionOf s1 s2 
 	| not (isSudoku s1 && isOkay s1 && blanks s1 == []) = False
-	| otherwise = all (\(a,b) -> a `plop` b) (zip (rows s1) (rows s2))
+	| otherwise = all (uncurry plop) (zip (rows s1) (rows s2))
 	where eqOnlyInt (c1, c2) = c1 == Nothing || c2 == Nothing || c1 == c2;
 		  plop a b = all eqOnlyInt (zip a b)
 
+
 prop_SolveSound :: Sudoku -> Property
-prop_SolveSound s = x /= Nothing && isSudoku s && isOkay s ==> isSolutionOf (fromJust x) s && isOkay (fromJust x) && isSolved (fromJust x)
+prop_SolveSound s = 
+	isSudoku s && isOkay s && solve s /= Nothing 
+		==> isSolutionOf (fromJust x) s && isOkay (fromJust x) && isSolved (fromJust x)
     where x = solve s
 
-fewerChecks prop = quickCheckWith stdArgs{ maxSuccess = 30 } prop
+fewerChecks prop = quickCheckWith stdArgs{ maxSuccess = 10 } prop
+
+
+--X-----------------------------------------------------------------------
+
+-- ** OPTIMIZED
+blanks :: Sudoku -> [Pos]
+blanks sudok = 
+	map (\(_,i,j)->(i,j)) (sort (filter (\(nb,_,_)-> nb /= -1) [(nbCandidates sudok (i,j),i,j) | i<-[0..8], j<-[0..8]]))
+	
+nbCandidates :: Sudoku -> Pos -> Int
+nbCandidates sudok (r,c) 	| rows sudok!! r !! c == Nothing = length (candidates sudok (r,c) )
+													| otherwise = -1
+
+
+
+--Y-----------------------------------------------------------------------
+
+propagate :: Sudoku -> Sudoku
+propagate s = fst (propagateR (s, False) 0)
+
+propagateR :: (Sudoku, Bool) -> Int -> (Sudoku, Bool)
+propagateR (s,b) i 
+	| i > 8 = propagateC (s, b) (-1)
+	| otherwise = propagateR (plop (rows s !! i) (s,b) i) (i+1)
+		
+propagateC :: (Sudoku, Bool) -> Int -> (Sudoku, Bool)		
+propagateC (s,b) i 
+	| i > 8 && not b = (Sudoku (transpose (rows s)), b)
+	| i > 8 && b = propagateR (Sudoku (transpose (rows s)), False) 0 --We reparse the lines and cols
+	| i == (-1) = propagateC (Sudoku (transpose (rows s)), b) 0
+	| otherwise = propagateC (plop (rows s !! i) (s,b) i) (i+1)
+		
+plop :: Block -> (Sudoku, Bool) -> Int -> (Sudoku, Bool)
+plop r (s,b) i = 
+	if
+    (length (elemIndices Nothing r) == 1) &&
+      (fromJust newEl `elem` candidates s pos)
+    then (update s pos newEl, True) else (s, b) 
+	where newEl = head ([Just j | j <- [1 .. 9]] \\ r);
+		  pos = (i, fromJust (elemIndex Nothing r))
+	
+		
 
 -------------------------------------------------------------------------
-
 -- TESTS
 example :: Sudoku
 example =
@@ -267,10 +321,10 @@ example2 =
       , [Just 4,Just 5,Just 6,Just 7,Just 8,Just 9,Just 1,Just 2,Just 3]
       , [Just 7,Just 8,Just 9,Just 1,Just 2,Just 3,Just 4,Just 5,Just 6]
       , [Just 2,Just 1,Just 4,Just 3,Just 6,Just 5,Just 8,Just 9,Just 7]
-      , [Just 3,Just 6,Just 5,Just 8,Just 9,Just 7,Just 2,Just 1,Just 4]
+      , [Just 3,Just 6,Just 5,Nothing,Just 9,Just 7,Just 2,Just 1,Just 4]
       , [Just 8,Just 9,Just 7,Just 2,Just 1,Just 4,Just 3,Just 6,Just 5]
-      , [Just 5,Just 3,Just 1,Just 6,Just 4,Just 2,Just 9,Just 7,Just 8]
-      , [Just 6,Just 4,Just 2,Just 9,Just 7,Just 8,Just 5,Just 3,Just 1]
+      , [Just 5,Just 3,Just 1,Just 6,Just 4,Nothing,Just 9,Just 7,Just 8]
+      , [Just 6,Just 4,Just 2,Nothing,Just 7,Just 8,Nothing,Just 3,Just 1]
       , [Just 9,Just 7,Just 8,Just 5,Just 3,Just 1,Just 6,Just 4,Just 2]
       ]
 example3 =
@@ -299,3 +353,5 @@ example3 =
 example4 = Sudoku {rows = [[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Just 3,Nothing,Just 5,Nothing,Nothing],[Nothing,Just 6,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Just 5,Nothing,Nothing,Nothing,Just 4],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Just 9,Nothing,Nothing,Nothing,Nothing,Nothing]]}
 
 bugBlanks = Sudoku {rows = [[Just 3,Just 2,Just 8,Just 4,Just 6,Just 5,Just 7,Nothing,Just 1],[Just 6,Just 5,Nothing,Just 1,Just 7,Just 9,Just 3,Just 4,Just 2],[Just 4,Just 1,Just 7,Just 2,Just 3,Just 8,Just 5,Just 9,Just 6],[Just 8,Just 6,Just 5,Just 3,Just 4,Just 2,Just 1,Just 7,Just 9],[Just 2,Just 7,Just 1,Just 5,Just 9,Just 6,Just 4,Just 8,Just 3],[Just 9,Just 4,Just 3,Just 8,Just 1,Just 7,Just 2,Just 6,Just 5],[Just 7,Just 8,Just 2,Just 6,Just 5,Just 1,Just 9,Just 3,Just 4],[Just 1,Just 9,Just 4,Just 7,Just 2,Just 3,Just 6,Just 5,Just 8],[Just 5,Just 3,Just 6,Just 9,Just 8,Just 4,Nothing,Just 1,Just 7]]}
+
+bugSolve1 = Sudoku {rows = [[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Just 7,Nothing,Nothing,Nothing,Nothing,Just 4,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Just 2],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Just 9,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]]}
