@@ -1,9 +1,19 @@
+{- 
+
+You will need to run the followings commands : 
+$> cabal update 
+$> cabal install ansi-terminal
+
+-}
+
 module GOL where
 
 import Data.List
 import Test.QuickCheck
 import Debug.Trace
 import System.Console.ANSI
+import Data.Maybe
+import Parsing
 
 type Grid = Matrix Value
 type Matrix a = [Row a]
@@ -43,10 +53,69 @@ listToString :: Row Value -> String
 listToString list = [b | b <- map toString list]
 
 toString :: Bool -> Char
-toString True = 'o'
+toString True = 'O'
 toString False = ' '
 
 -- File reader ###############################################################
+
+readGrid :: FilePath -> IO Grid 
+readGrid file = do
+	f <- readFile file
+	let l = lines f --Read lines
+	let (l0, l1) = splitAt 1 l -- Get the 1rst line (useless info)
+	let size = read (init ((words (l0!!0)) !! 2))::Int -- Size of the rows
+	let ll = init (concat l1) --Reconcat the other lines, and remove the '!' at the end
+	let lin = wordsWhen (=='$') ll --Split the lines by the '$'
+	let ret = [transformLine c size | c <- lin]
+	return ret
+	
+transformLine :: String -> Int -> Row Value
+transformLine l s = transformLine' l 0 (replicate s False)
+
+--Parses the string, and modifies the line starting at the Int char
+transformLine' :: String -> Int -> Row Value -> Row Value
+transformLine' [] _ r = r
+transformLine' l s r = 
+	if isJust num 
+		then if length (snd (fromJust num)) > 0 
+				then if (snd (fromJust num)) !! 0 == 'o' 
+						then transformLine' (tail (snd (fromJust num))) (nb + s) newList
+						else transformLine' (tail (snd (fromJust num))) (nb + s) r
+				else r
+		else if l !! 0 == 'o'
+				then transformLine' (tail l) (s + 1) (r !!= (s, True))
+				else transformLine' (tail l) (s + 1) r
+	where 
+		num = parse (oneOrMore digit) l;
+		newList = r !!!= (s, (replicate nb True));
+		nb = read (fst (fromJust num))
+	
+
+-- Changes the element at the given position by the given element in a list.
+(!!=) :: [a] -> (Int,a) -> [a]
+(!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
+				| i < 0 = error "Negative index !!"
+				| otherwise = take i l ++ [el] ++ drop (i+1) l
+				
+-- Changes the elements at the given position by the given elements.
+(!!!=) :: [a] -> (Int,[a]) -> [a]
+(!!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
+				| i < 0 = error "Negative index !!"
+				| otherwise = take i l ++ el ++ drop (i+(length el)) l
+
+
+-- parse (oneOrMore digit) "234oiu"
+-- parse (oneOrMore (char 'o')) "234oiu"
+
+
+--Split function
+wordsWhen     :: (Char -> Bool) -> String -> [String]
+wordsWhen p s =  case dropWhile p s of
+                      "" -> []
+                      s' -> w : wordsWhen p s''
+                            where (w, s'') = break p s'
+
+
 
 --readGrid :: FilePath -> IO Grid 
 {-
