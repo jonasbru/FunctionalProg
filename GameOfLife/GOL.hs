@@ -15,7 +15,6 @@ import System.Console.ANSI
 import Data.Maybe
 import Parsing
 import Control.Concurrent
-import Graphics.GD
 
 type Grid = Matrix Value
 type Matrix a = [Row a]
@@ -29,7 +28,7 @@ type Point = (Int,Int)
 -- Loop 	####################################################################
 run grid = 	do
 							printGrid grid
-							threadDelay(1000000)
+							threadDelay(100000)
 							run (nextStep grid)
 
 -- Core #####################################################################
@@ -79,13 +78,19 @@ transform (x,y) grid	| hasToDie pt grid = False
 
 -- Jonas #####################################################################
 
+addRows :: Grid -> Int -> Grid
+addRows g i = g ++ (replicate i (replicate (length (g!!0)) False))
+
+addCols :: Grid -> Int -> Grid
+addCols g i = transpose ((transpose g) ++ (replicate i (replicate (length ((transpose g)!!0)) False)))
+
 
 -- Terminal print ############################################################
 printGrid :: Grid -> IO ()
 printGrid g = 
 	do 
 		clearScreen
-		mapM_ putStrLn lines
+		putStr (unlines lines) --mapM_ putStrLn lines
 	where lines = map listToString g
 
 listToString :: Row Value -> String
@@ -93,7 +98,7 @@ listToString list = [b | b <- map toString list]
 
 toString :: Bool -> Char
 toString True = 'O'
-toString False = ' '
+toString False = '.'
 
 -- File reader ###############################################################
 
@@ -142,54 +147,12 @@ transformLine' l s r =
 				| i < 0 = error "Negative index !!"
 				| otherwise = take i l ++ el ++ drop (i+(length el)) l
 
-
--- parse (oneOrMore digit) "234oiu"
--- parse (oneOrMore (char 'o')) "234oiu"
-
-
 --Split function
 wordsWhen     :: (Char -> Bool) -> String -> [String]
 wordsWhen p s =  case dropWhile p s of
                       "" -> []
                       s' -> w : wordsWhen p s''
                             where (w, s'') = break p s'
-
-
-
---readGrid :: FilePath -> IO Grid 
-{-
-readGrid file = do 
-	f <- readFile file
-	l <- lines f
-	(l0, l1) <- splitAt 1 l
-	ll <- concat l1
-	return ll 
--}
-
---readGrid :: FilePath -> Grid		
-{-
-readGrid file = 
-	ll
-	where
-		f = do
-			merdeuh <- readF file
-			let cacaca = merdeuh
-			return cacaca
-		l = lines f;
-		(l0, l1) = splitAt 1 l;
-		ll = concat l1
-	-}	
-readF :: FilePath -> IO String
-readF file = do 
-	p <- readFile file
-	return p
-	
---	let s = Sudoku [map transformLine p | p <- lines g]
-	
--- Returns the case corresponding to the char
---transformLine :: Char -> Maybe Int
---transformLine '.' = Nothing
---transformLine c = Just (digitToInt c)
 
 ------------------------------------------------
 example=[[False,False, False],[True,True, True],[False,False, False]]
