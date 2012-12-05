@@ -1,4 +1,14 @@
-module GOL (nextStep,getLivingsCoord,Grid) where
+module GOL (
+	nextStep,
+	getLivingsCoord,
+	readGrid,
+	addRows,
+	addCols,
+	addRowsBeginning,
+	addColsBeginning,
+	addRowsAndCols,
+	addRowsAndColsEverywhere,
+	Grid) where
 
 {- 
 
@@ -88,9 +98,21 @@ getLivingsCoord grid = filter (\(a,b)->grid!!a!!b==True ) (concat [ [ (x,y) | y 
 addRows :: Grid -> Int -> Grid
 addRows g i = g ++ (replicate i (replicate (length (g!!0)) False))
 
+addRowsBeginning :: Grid -> Int -> Grid
+addRowsBeginning g i = (replicate i (replicate (length (g!!0)) False)) ++ g
+
 addCols :: Grid -> Int -> Grid
 addCols g i = transpose ((transpose g) ++ (replicate i (replicate (length ((transpose g)!!0)) False)))
 
+addColsBeginning :: Grid -> Int -> Grid
+addColsBeginning g i = transpose ((replicate i (replicate (length ((transpose g)!!0)) False)) ++ (transpose g))
+
+addRowsAndCols :: Grid -> Int -> Int -> Grid
+addRowsAndCols g r c = addRows (addCols g c) r
+
+-- rows cols rowsBeginning colsBeginning
+addRowsAndColsEverywhere :: Grid -> Int -> Int -> Int -> Int -> Grid
+addRowsAndColsEverywhere g r c rb cb = addRowsBeginning (addColsBeginning (addRows (addCols g c) r) cb) rb
 
 -- Terminal print ############################################################
 printGrid :: Grid -> IO ()
