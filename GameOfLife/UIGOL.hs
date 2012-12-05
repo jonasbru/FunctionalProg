@@ -46,7 +46,7 @@ main =
      clr `onClicked`  evolve can grid (\_ -> (do bs <- readIORef baseGrid;return bs)) scale
 
      -- create Zoom button
-     zoom <- hScaleNewWithRange 10 200 (fromIntegral radius)
+     zoom <- hScaleNewWithRange (fromIntegral radius) 200 (fromIntegral radius)
      adj <- rangeGetAdjustment zoom
      zoom `onRangeValueChanged`  (do newZoom <- adjustmentGetValue adj;updateScale scale (round newZoom))
 
