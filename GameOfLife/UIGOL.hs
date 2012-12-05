@@ -2,6 +2,7 @@ module Main where
 
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.GC
+import GHC.Float
 import GOL
 
 import Data.IORef
@@ -17,7 +18,7 @@ example=[[False,False, False],[True,True, True],[False,False, False]]
 sizeX, sizeY, radius, speed :: Int
 sizeX  = 600
 sizeY  = 600
-radius = 20
+radius = 10
 speed = 500
 ------------------------------------------------------------------------
 
@@ -45,7 +46,7 @@ main =
      clr `onClicked`  evolve can grid (\_ -> (do bs <- readIORef baseGrid;return bs)) scale
 
      -- create Zoom button
-     zoom <- hScaleNewWithRange 5 200 5
+     zoom <- hScaleNewWithRange 10 200 (fromIntegral radius)
      adj <- rangeGetAdjustment zoom
      zoom `onRangeValueChanged`  (do newZoom <- adjustmentGetValue adj;updateScale scale (round newZoom))
 
@@ -78,12 +79,12 @@ draw can bs scale =
      drawWindowClear dw
      gc <- gcNew dw
      scal <- readIORef scale
-     gcSetValues gc newGCValues{ foreground = red }
+     gcSetValues gc newGCValues{ foreground = black }
      sequence_ [ drawSquare dw gc p scal
                | p <- (getLivingsCoord bs)
                ]
  where
-  red = Color 65535 0 0 
+  black = Color 0 65535 0 
   drawSquare dw gc (x,y) r =
     drawRectangle dw gc True (x*r) (y*r) r r
 
