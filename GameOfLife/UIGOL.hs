@@ -31,11 +31,12 @@ main =
      args <- getArgs
 
      gridRLE <- case length args of
-                    0 -> return example
-                    1 -> readGrid (args !! 0)
-                    3 -> (do g <- readGrid (args !! 0); return (addRowsAndCols g (read (args !! 1)) (read (args !! 2))))
-                    5 -> (do g <- readGrid (args !! 0); return (addRowsAndColsEverywhere g (read (args !! 1)) (read (args !! 2)) (read (args !! 3)) (read (args !! 4))))
-                    _ -> error "Bad number of arguments !"
+        0 -> return example
+        1 -> readGrid (head args)
+        3 -> (do g <- readGrid (head args); return (addRowsAndCols g (read (args !! 1)) (read (args !! 2))))
+        5 -> do g <- readGrid (head args); 
+                return (addRowsAndColsEverywhere g (read (args !! 1)) (read (args !! 2)) (read (args !! 3)) (read (args !! 4)))
+        _ -> error "Bad number of arguments !"
 
      -- create main window
      win <- windowNew
@@ -54,7 +55,7 @@ main =
      
      -- create Reset button
      clr <- buttonNewWithLabel "Reset"
-     clr `onClicked`  evolve can grid (\_ -> (do bs <- readIORef baseGrid;return bs)) scale
+     clr `onClicked`  evolve can grid (\_ -> readIORef baseGrid) scale
 
      -- create Zoom button
      zoom <- hScaleNewWithRange (fromIntegral radius) 30 (fromIntegral radius)
@@ -66,7 +67,7 @@ main =
      cls `onClicked` widgetDestroy win
      
      -- create timer; this runs the animation
-     timeoutAdd (evolveEvent can grid (\g -> return (nextStep g)) scale) speed
+     timeoutAdd (evolveEvent can grid (return . nextStep) scale) speed
      
      -- describe layout of all widgets
      buts <- hBoxNew False 5
@@ -92,7 +93,7 @@ draw can bs scale =
      scal <- readIORef scale
      gcSetValues gc newGCValues{ foreground = black }
      sequence_ [ drawSquare dw gc p scal
-               | p <- ([(y,x) | (x,y) <- getLivingsCoord bs])
+               | p <- [(y,x) | (x,y) <- getLivingsCoord bs]
                ]
  where
   black = Color 0 65535 0 
@@ -111,7 +112,8 @@ evolveEvent can grid f scale=
   do evolve can grid f scale
      return True
 
-updateScale scale value =
-	do writeIORef scale value
+updateScale = writeIORef
+--updateScale scale value =
+--	writeIORef scale value
 ------------------------------------------------------------------------
 
