@@ -1,10 +1,21 @@
 module GOL (nextStep,getLivingsCoord,Grid) where
 
+{- 
+
+You will need to run the followings commands : 
+$> cabal update 
+$> cabal install ansi-terminal
+
+-}
+
 import Data.List
 import Test.QuickCheck
 import Debug.Trace
 import System.Console.ANSI
+import Data.Maybe
+import Parsing
 import Control.Concurrent
+
 
 type Grid = Matrix Value
 type Matrix a = [Row a]
@@ -17,7 +28,7 @@ type Point = (Int,Int)
 -- Loop 	####################################################################
 run grid = 	do
 							printGrid grid
-							threadDelay(1000000)
+							threadDelay(100000)
 							run (nextStep grid)
 
 -- Core #####################################################################
@@ -64,10 +75,7 @@ transform (x,y) grid	| hasToDie pt grid = False
 											| otherwise = grid!!x!!y
 												where pt = (x,y)
 
-getLivingsInvertCoord :: Grid -> [Point]
-getLivingsInvertCoord grid = filter (\(a,b)->grid!!b!!a==True ) (concat [ [ (y,x) | y <- [0..width] ] | x<-[0..heigh] ])
-										where heigh = (length grid) -1;
-													width = (length $ head grid) -1
+-- return coordinates of living cells
 getLivingsCoord :: Grid -> [Point]
 getLivingsCoord grid = filter (\(a,b)->grid!!a!!b==True ) (concat [ [ (x,y) | y <- [0..width] ] | x<-[0..heigh] ])
 										where heigh = (length grid) -1;
@@ -77,58 +85,81 @@ getLivingsCoord grid = filter (\(a,b)->grid!!a!!b==True ) (concat [ [ (x,y) | y 
 
 -- Jonas #####################################################################
 
+addRows :: Grid -> Int -> Grid
+addRows g i = g ++ (replicate i (replicate (length (g!!0)) False))
+
+addCols :: Grid -> Int -> Grid
+addCols g i = transpose ((transpose g) ++ (replicate i (replicate (length ((transpose g)!!0)) False)))
+
 
 -- Terminal print ############################################################
 printGrid :: Grid -> IO ()
 printGrid g = 
 	do 
 		clearScreen
-		mapM_ putStrLn lines
+		putStr (unlines lines) --mapM_ putStrLn lines
 	where lines = map listToString g
 
 listToString :: Row Value -> String
 listToString list = [b | b <- map toString list]
 
 toString :: Bool -> Char
-toString True = 'o'
-toString False = ' '
+toString True = 'O'
+toString False = '.'
 
 -- File reader ###############################################################
 
---readGrid :: FilePath -> IO Grid 
-{-
-readGrid file = do 
+readGrid :: FilePath -> IO Grid 
+readGrid file = do
 	f <- readFile file
-	l <- lines f
-	(l0, l1) <- splitAt 1 l
-	ll <- concat l1
-	return ll 
--}
+	let l = lines f --Read lines
+	let (l0, l1) = splitAt 1 l -- Get the 1rst line (useless info)
+	let size = read (init ((words (l0!!0)) !! 2))::Int -- Size of the rows
+	let ll = init (concat l1) --Reconcat the other lines, and remove the '!' at the end
+	let lin = wordsWhen (=='$') ll --Split the lines by the '$'
+	let ret = [transformLine c size | c <- lin]
+	return ret
+	
+transformLine :: String -> Int -> Row Value
+transformLine l s = transformLine' l 0 (replicate s False)
 
---readGrid :: FilePath -> Grid		
-{-
-readGrid file = 
-	ll
-	where
-		f = do
-			merdeuh <- readF file
-			let cacaca = merdeuh
-			return cacaca
-		l = lines f;
-		(l0, l1) = splitAt 1 l;
-		ll = concat l1
-	-}	
-readF :: FilePath -> IO String
-readF file = do 
-	p <- readFile file
-	return p
+--Parses the string, and modifies the line starting at the Int char
+transformLine' :: String -> Int -> Row Value -> Row Value
+transformLine' [] _ r = r
+transformLine' l s r = 
+	if isJust num 
+		then if length (snd (fromJust num)) > 0 
+				then if (snd (fromJust num)) !! 0 == 'o' 
+						then transformLine' (tail (snd (fromJust num))) (nb + s) newList
+						else transformLine' (tail (snd (fromJust num))) (nb + s) r
+				else r
+		else if l !! 0 == 'o'
+				then transformLine' (tail l) (s + 1) (r !!= (s, True))
+				else transformLine' (tail l) (s + 1) r
+	where 
+		num = parse (oneOrMore digit) l;
+		newList = r !!!= (s, (replicate nb True));
+		nb = read (fst (fromJust num))
 	
---	let s = Sudoku [map transformLine p | p <- lines g]
-	
--- Returns the case corresponding to the char
---transformLine :: Char -> Maybe Int
---transformLine '.' = Nothing
---transformLine c = Just (digitToInt c)
+
+-- Changes the element at the given position by the given element in a list.
+(!!=) :: [a] -> (Int,a) -> [a]
+(!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
+				| i < 0 = error "Negative index !!"
+				| otherwise = take i l ++ [el] ++ drop (i+1) l
+				
+-- Changes the elements at the given position by the given elements.
+(!!!=) :: [a] -> (Int,[a]) -> [a]
+(!!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
+				| i < 0 = error "Negative index !!"
+				| otherwise = take i l ++ el ++ drop (i+(length el)) l
+
+--Split function
+wordsWhen     :: (Char -> Bool) -> String -> [String]
+wordsWhen p s =  case dropWhile p s of
+                      "" -> []
+                      s' -> w : wordsWhen p s''
+                            where (w, s'') = break p s'
 
 ------------------------------------------------
 example=[[False,False, False],[True,True, True],[False,False, False]]
