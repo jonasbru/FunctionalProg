@@ -1,11 +1,10 @@
-module GOL where
+module GOL (nextStep,getLivingsCoord,Grid) where
 
 import Data.List
 import Test.QuickCheck
 import Debug.Trace
 import System.Console.ANSI
 import Control.Concurrent
-import Graphics.GD
 
 type Grid = Matrix Value
 type Matrix a = [Row a]
@@ -14,8 +13,6 @@ type Value = Bool
 type Point = (Int,Int)
 
 -- Micka	####################################################################
--- create Image 	############################################################
-saveImg = newImage 16
 
 -- Loop 	####################################################################
 run grid = 	do
@@ -66,6 +63,16 @@ transform (x,y) grid	| hasToDie pt grid = False
 											| hasToBorn pt grid = True
 											| otherwise = grid!!x!!y
 												where pt = (x,y)
+
+getLivingsInvertCoord :: Grid -> [Point]
+getLivingsInvertCoord grid = filter (\(a,b)->grid!!b!!a==True ) (concat [ [ (y,x) | y <- [0..width] ] | x<-[0..heigh] ])
+										where heigh = (length grid) -1;
+													width = (length $ head grid) -1
+getLivingsCoord :: Grid -> [Point]
+getLivingsCoord grid = filter (\(a,b)->grid!!a!!b==True ) (concat [ [ (x,y) | y <- [0..width] ] | x<-[0..heigh] ])
+										where heigh = (length grid) -1;
+													width = (length $ head grid) -1
+	
 -- End Core ##################################################################
 
 -- Jonas #####################################################################
