@@ -1,6 +1,7 @@
 module GOL (
 	nextStep,
 	readGrid,
+	preTransformLine,
 	Cells) where
 
 {- 
@@ -62,22 +63,28 @@ readGrid file = do
 	let size = read (init (words (head l0) !! 2))::Int -- Size of the rows
 	let ll = init (concat l1) --Reconcat the other lines, and remove the '!' at the end
 	let lin = wordsWhen (=='$') ll --Split the lines by the '$'
-	let ret = [transformLine c size | c <- lin]
+	let ret = preTransformLine lin size []			--let ret = [transformLine c size | c <- lin]
 	return (getLivingsCoord ret)
-	
-transformLine :: String -> Int -> Row Value
+
+preTransformLine :: [String] -> Int -> Grid -> Grid
+preTransformLine [] _ grid = grid
+preTransformLine (l0:l1) size grid = preTransformLine l1 size (grid ++ [lRet] ++ plus)
+	where (lRet, linesPlus) = transformLine l0 size;
+		  plus = replicate linesPlus (replicate size False)
+
+transformLine :: String -> Int -> (Row Value, Int)
 transformLine l s = transformLine' l 0 (replicate s False)
 
 --Parses the string, and modifies the line starting at the Int char
-transformLine' :: String -> Int -> Row Value -> Row Value
-transformLine' [] _ r = r
+transformLine' :: String -> Int -> Row Value -> (Row Value, Int)
+transformLine' [] _ r = (r,0)
 transformLine' l s r
     | isJust num =
       if length (snd (fromJust num)) > 0 then
         if head (snd (fromJust num)) == 'o' then
           transformLine' (tail (snd (fromJust num))) (nb + s) newList else
           transformLine' (tail (snd (fromJust num))) (nb + s) r
-        else r
+        else (r,(nb-1))
     | head l == 'o' = transformLine' (tail l) (s + 1) (r !!= (s, True))
     | head l == 'b' = transformLine' (tail l) (s + 1) r
     | otherwise     =  transformLine' (tail l) s r
