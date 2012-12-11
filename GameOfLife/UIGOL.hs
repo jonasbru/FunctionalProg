@@ -1,3 +1,27 @@
+{-
+    ********************************************************
+    *      HASKELL IMPLEMENTATION OF THE GAME OF LIFE      *
+    ********************************************************
+
+    Chalmers -- Functional Programming -- Lab Assignment 4
+    Michael Fagno && Jonas Bru
+    
+    The file was run through hlint without warnings 
+
+    You will need the package libghc-glib-dev to run this file
+    And then, run in a terminal :
+    $> export PATH=$PATH:$HOME/.cabal/bin
+    $> cabal install gtk2hs-buildtools
+    $> cabal install gtk
+    It can be a goo idea to add $HOME/.cabal/bin into bash.rc
+
+    To compile and run :
+    $> ghc --make UIGOL.hs
+    $> ./UIGOL [File]
+    Where file is the path of a RLE Game of Life file
+    If you don't provide any file, a test pattern will be loaded
+-}
+
 module Main where
 
 import Graphics.UI.Gtk
@@ -9,11 +33,6 @@ import System.Environment
 import Data.IORef
 example=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,2::Int)]
 example2=[(0,-1),(1,-1),(2,-1)]
---need libghc-glib-dev
---export PATH=$PATH:$HOME/.cabal/bin
---dans bash.rc modifier PATH pour persistence
---cabal install gtk2hs-buildtools
---cabal install gtk
 
 ------------------------------------------------------------------------
 
