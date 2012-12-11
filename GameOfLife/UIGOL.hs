@@ -21,6 +21,7 @@ sizeX, sizeY, radius, frameDefaultSpeed, maxframeSpeed :: Int
 sizeX  = 600
 sizeY  = 600
 radius = 1
+move = 50
 frameDefaultSpeed = 300
 maxframeSpeed = 1000
 ------------------------------------------------------------------------
@@ -80,18 +81,37 @@ main =
      cls <- buttonNewWithLabel "Close"
      cls `onClicked` widgetDestroy win
      
-     
+     -- create moove button
+     mvUp <- buttonNewWithLabel "Up"
+     mvDown <- buttonNewWithLabel "Down"
+     mvLeft <- buttonNewWithLabel "Left"
+     mvRight <- buttonNewWithLabel "Right"
+     mvUp `onClicked` moveUp cells scale
+     mvDown `onClicked` moveDown cells scale
+     mvLeft `onClicked` moveLeft cells scale
+     mvRight `onClicked` moveRight cells scale
+
+
 
      -- describe layout of all widgets
+     
+
      buts <- hBoxNew False 5
      containerAdd buts clr
      containerAdd buts zoom
      containerAdd buts cls
      containerAdd buts stp
      
+     butsmv <- hBoxNew False 5
+     containerAdd butsmv mvUp
+     containerAdd butsmv mvDown
+     containerAdd butsmv mvLeft
+     containerAdd butsmv mvRight
+
      lay <- vBoxNew False 5
      containerAdd lay can
      containerAdd lay buts
+     containerAdd lay butsmv
      
      containerAdd win lay
      widgetShowAll win
@@ -133,5 +153,33 @@ changeTimer timer frameSpeed f= do
      _timer <- timeoutAdd f frameSpeed
      writeIORef timer _timer
 
+-- Move functions
+moveLeft :: IORef Cells -> IORef Int -> IO ()
+moveLeft cells scale = do
+    scal <- readIORef scale
+    (changeIORef cells (translate (move `div` scal)	 0))
+
+moveRight :: IORef Cells -> IORef Int -> IO ()
+moveRight cells scale = do
+    scal <- readIORef scale
+    (changeIORef cells (translate (-(move `div` scal)) 0))
+
+moveUp :: IORef Cells -> IORef Int -> IO ()
+moveUp cells scale = do
+    scal <- readIORef scale
+    (changeIORef cells (translate 0 (move `div` scal)))
+
+moveDown :: IORef Cells -> IORef Int -> IO ()
+moveDown cells scale = do
+    scal <- readIORef scale
+    (changeIORef cells (translate 0 (-(move `div` scal))))
+
+translate ::Int -> Int -> Cells -> IO Cells
+translate dx dy cells=do return ( map (\(x,y) -> (x + dx, y + dy)) cells)
+
+changeIORef cells f = do
+     bs <- readIORef cells
+     bs' <- f bs
+     writeIORef cells bs'
 ------------------------------------------------------------------------
 
