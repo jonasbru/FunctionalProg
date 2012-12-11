@@ -16,11 +16,12 @@ example=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,2::Int)]
 
 ------------------------------------------------------------------------
 
-sizeX, sizeY, radius, speed :: Int
+sizeX, sizeY, radius, frameSpeed, maxframeSpeed :: Int
 sizeX  = 600
 sizeY  = 600
 radius = 1
-speed = 500
+frameSpeed = 300
+maxframeSpeed = 1000
 ------------------------------------------------------------------------
 
 main :: IO ()
@@ -40,7 +41,7 @@ main =
      windowSetTitle win "GOL"
      win `onDestroy` mainQuit
 
-     -- create abstract widget
+     -- create Ref
 
      cells <- newIORef gridRLE
      baseCells <- newIORef gridRLE
@@ -51,27 +52,41 @@ main =
      can `onSizeRequest` return (Requisition sizeX sizeY)
      can `onExpose`      (\_ -> evolveEvent can cells return scale)
      
+     -- main function
+     f <-return (evolveEvent can cells (return . nextStep) scale)
+
+     -- create timer; this runs the animation
+     _timer <- timeoutAdd (evolveEvent can cells (return . nextStep) scale) frameSpeed
+     timer <-  newIORef (_timer)
+
      -- create Reset button
      clr <- buttonNewWithLabel "Reset"
      clr `onClicked`  evolve can cells (\_ -> readIORef baseCells) scale
 
+     -- create speed button
+     stp <- hScaleNewWithRange (fromIntegral 5) (fromIntegral maxframeSpeed) (100)
+     adjstp <- rangeGetAdjustment stp
+     adjustmentSetValue adjstp (fromIntegral frameSpeed)
+     stp `onRangeValueChanged`  (do newSpeed <- adjustmentGetValue adjstp;changeTimer timer (round newSpeed) f)
+
+
      -- create Zoom button
      zoom <- hScaleNewWithRange (fromIntegral radius) 30 (fromIntegral radius)
      adj <- rangeGetAdjustment zoom
-     zoom `onRangeValueChanged`  (do newZoom <- adjustmentGetValue adj;updateScale scale (round newZoom))
+     zoom `onRangeValueChanged`  (do newZoom <- adjustmentGetValue adj;writeIORef scale (round newZoom))
 
      -- create Close button     
      cls <- buttonNewWithLabel "Close"
      cls `onClicked` widgetDestroy win
      
-     -- create timer; this runs the animation
-     timeoutAdd (evolveEvent can cells (return . nextStep) scale) speed
      
+
      -- describe layout of all widgets
      buts <- hBoxNew False 5
      containerAdd buts clr
      containerAdd buts zoom
      containerAdd buts cls
+     containerAdd buts stp
      
      lay <- vBoxNew False 5
      containerAdd lay can
@@ -100,19 +115,22 @@ draw can bs scale =
     drawRectangle dw gc True (x*r + r `div` 5) (y*r + r `div` 5) (r - r `div` 5 ) (r - r `div` 5)
 
 evolve :: DrawingArea -> IORef Cells -> (Cells -> IO Cells) -> IORef Int-> IO ()
-evolve can cells f scale=
+evolve can cells f scale =
   do bs <- readIORef cells
      bs' <- f bs
      writeIORef cells bs'
      draw can bs' scale
 
 evolveEvent :: DrawingArea -> IORef Cells -> (Cells -> IO Cells) -> IORef Int -> IO Bool
-evolveEvent can cells f scale=
-  do evolve can cells f scale
+evolveEvent can cells f scale = do
+     evolve can cells f scale
      return True
 
-updateScale = writeIORef
---updateScale scale value =
---	writeIORef scale value
+changeTimer timer frameSpeed f= do
+     htimer <-(readIORef timer)
+     timeoutRemove (htimer)
+     _timer <- timeoutAdd f frameSpeed
+     writeIORef timer _timer
+
 ------------------------------------------------------------------------
 
