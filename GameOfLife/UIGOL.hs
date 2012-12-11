@@ -20,7 +20,7 @@ sizeX, sizeY, radius, speed :: Int
 sizeX  = 600
 sizeY  = 600
 radius = 1
-speed = 100
+speed = 10
 ------------------------------------------------------------------------
 
 main :: IO ()
@@ -65,7 +65,7 @@ main =
      cls `onClicked` widgetDestroy win
      
      -- create timer; this runs the animation
-     timeoutAdd (evolveEvent can cells (return . knextStep) scale) speed
+     timeoutAdd (evolveEvent can cells (return . nextStep) scale) speed
      
      -- describe layout of all widgets
      buts <- hBoxNew False 5
