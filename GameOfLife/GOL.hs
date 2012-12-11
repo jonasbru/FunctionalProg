@@ -79,16 +79,17 @@ transformLine' l s r
           transformLine' (tail (snd (fromJust num))) (nb + s) r
         else r
     | head l == 'o' = transformLine' (tail l) (s + 1) (r !!= (s, True))
-    | otherwise = transformLine' (tail l) (s + 1) r
-    where num = parse (oneOrMore digit) l
+    | head l == 'b' = transformLine' (tail l) (s + 1) r
+    | otherwise     =  transformLine' (tail l) s r
+    where num     = parse (oneOrMore digit) l
           newList = r !!!= (s, replicate nb True)
-          nb = read (fst (fromJust num))
+          nb      = read (fst (fromJust num))
 
 	
 
 -- Changes the element at the given position by the given element in a list.
 (!!=) :: [a] -> (Int,a) -> [a]
-(!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
+(!!=) l (i, el) | length l <= i = error ("Index out of bounds !!!!!!!! " ++ (show (length l)) ++ ">=" ++ (show i))
 				| i < 0 = error "Negative index !!"
 				| otherwise = take i l ++ [el] ++ drop (i+1) l
 				
