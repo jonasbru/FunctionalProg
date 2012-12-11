@@ -20,7 +20,7 @@ sizeX, sizeY, radius, speed :: Int
 sizeX  = 600
 sizeY  = 600
 radius = 1
-speed = 10
+speed = 500
 ------------------------------------------------------------------------
 
 main :: IO ()
@@ -83,6 +83,7 @@ main =
 
 ------------------------------------------------------------------------
 
+-- Draw square for living cells
 draw :: DrawingArea -> Cells -> IORef Int -> IO ()
 draw can bs scale =
   do dw <- widgetGetDrawWindow can
@@ -96,7 +97,7 @@ draw can bs scale =
  where
   black = Color 0 65535 0 
   drawSquare dw gc (x,y) r =
-    drawRectangle dw gc True (x*r) (y*r) r r
+    drawRectangle dw gc True (x*r + r `div` 5) (y*r + r `div` 5) (r - r `div` 5 ) (r - r `div` 5)
 
 evolve :: DrawingArea -> IORef Cells -> (Cells -> IO Cells) -> IORef Int-> IO ()
 evolve can cells f scale=
