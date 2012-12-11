@@ -1,4 +1,4 @@
-module GOL (nextStep,getLivingsCoord,Grid) where
+module GOL (knextStep,getLivingsCoord,Cells) where
 
 {- 
 
@@ -21,10 +21,30 @@ type Grid = Matrix Value
 type Matrix a = [Row a]
 type Row a = [a]
 type Value = Bool
-type Point = (Int,Int)
 
 -- Micka	####################################################################
+type Cells = [Point]
+type Point = (Int,Int)
 
+-- Return the list of neighbors coordinates
+kgetNeighbors :: Point -> [Point]
+kgetNeighbors (x,y) = map (\(dx,dy) -> (x+dx,y+dy)) neighborsOffset
+
+knextStep ::  Cells -> Cells
+knextStep activeList = map (\(x:xs) -> x) (filter (hasToLiveFilter) neighborsList)
+					where neighborsList = group . sort $ concat ([ kgetNeighbors alive | alive <- activeList]);
+								hasToLiveFilter (x:xs) =  kevolve x activeList (length (x:xs))
+
+kevolve :: Point -> Cells -> Int -> Bool
+kevolve point actives 2 | elem point actives= True
+kevolve _ _ 3 = True
+kevolve point _ _ = False
+
+neighborsOffset = [	(-1,-1),(0,-1),(1,-1),
+             				(-1, 0),       (1, 0),
+             				(-1, 1),(0, 1),(1, 1)]
+
+-- ****************************************************************************
 -- Loop 	####################################################################
 run grid = 	do
 							printGrid grid
@@ -48,9 +68,9 @@ isInside:: Point -> Grid -> Bool
 isInside (a,b) grid | a >= 0 && a < length grid && b >= 0 && b < length (head grid) = True
 										| otherwise = False
 
-neighborsOffset = [	(-1,-1),(0,-1),(1,-1),
-             				(-1, 0),       (1, 0),
-             				(-1, 1),(0, 1),(1, 1)]
+--neighborsOffset = [	(-1,-1),(0,-1),(1,-1),
+--             				(-1, 0),       (1, 0),
+--             				(-1, 1),(0, 1),(1, 1)]
 
 -- Count how many cells are alive near a cell
 countNextAlive :: Point -> Grid -> Int
@@ -93,7 +113,7 @@ addCols g i = transpose ((transpose g) ++ (replicate i (replicate (length ((tran
 
 
 -- Terminal print ############################################################
-printGrid :: Grid -> IO ()
+printGrid :: Cells -> IO ()
 printGrid g = 
 	do 
 		clearScreen
@@ -162,6 +182,5 @@ wordsWhen p s =  case dropWhile p s of
                             where (w, s'') = break p s'
 
 ------------------------------------------------
-example=[[False,False, False],[True,True, True],[False,False, False]]
-plop = [[True,False],[False,True]]
-plop2 = [[False,True],[True,False]]
+example=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,3::Int)]
+

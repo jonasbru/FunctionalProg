@@ -6,7 +6,7 @@ import GHC.Float
 import GOL
 
 import Data.IORef
-example=[[False,False, False],[True,True, True],[False,False, False]]
+example=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,3::Int)]
 --need libghc-glib-dev
 --export PATH=$PATH:$HOME/.cabal/bin
 --dans bash.rc modifier PATH pour persistence
@@ -32,18 +32,18 @@ main =
      win `onDestroy` mainQuit
      
      -- create abstract widget
-     grid <- newIORef example
-     baseGrid <- newIORef example
+     cells <- newIORef example
+     baseCells <- newIORef example
      scale <- newIORef radius
 
      -- create canvas (drawing area)
      can <- drawingAreaNew
      can `onSizeRequest` return (Requisition sizeX sizeY)
-     can `onExpose`      (\_ -> evolveEvent can grid return scale)
+     can `onExpose`      (\_ -> evolveEvent can cells return scale)
      
      -- create Reset button
      clr <- buttonNewWithLabel "Reset"
-     clr `onClicked`  evolve can grid (\_ -> (do bs <- readIORef baseGrid;return bs)) scale
+     clr `onClicked`  evolve can cells (\_ -> (do bs <- readIORef baseCells;return bs)) scale
 
      -- create Zoom button
      zoom <- hScaleNewWithRange (fromIntegral radius) 200 (fromIntegral radius)
@@ -55,7 +55,7 @@ main =
      cls `onClicked` widgetDestroy win
      
      -- create timer; this runs the animation
-     timeoutAdd (evolveEvent can grid (\g -> return (nextStep g)) scale) speed
+     timeoutAdd (evolveEvent can cells (\g -> return (knextStep g)) scale) speed
      
      -- describe layout of all widgets
      buts <- hBoxNew False 5
@@ -73,7 +73,7 @@ main =
 
 ------------------------------------------------------------------------
 
-draw :: DrawingArea -> Grid -> IORef Int -> IO ()
+draw :: DrawingArea -> Cells -> IORef Int -> IO ()
 draw can bs scale =
   do dw <- widgetGetDrawWindow can
      drawWindowClear dw
@@ -81,23 +81,23 @@ draw can bs scale =
      scal <- readIORef scale
      gcSetValues gc newGCValues{ foreground = black }
      sequence_ [ drawSquare dw gc p scal
-               | p <- (getLivingsCoord bs)
+               | p <- bs
                ]
  where
   black = Color 0 65535 0 
   drawSquare dw gc (x,y) r =
     drawRectangle dw gc True (x*r) (y*r) r r
 
-evolve :: DrawingArea -> IORef Grid -> (Grid -> IO Grid) -> IORef Int-> IO ()
-evolve can grid f scale=
-  do bs <- readIORef grid
+evolve :: DrawingArea -> IORef Cells -> (Cells -> IO Cells) -> IORef Int-> IO ()
+evolve can cells f scale=
+  do bs <- readIORef cells
      bs' <- f bs
-     writeIORef grid bs'
+     writeIORef cells bs'
      draw can bs' scale
 
-evolveEvent :: DrawingArea -> IORef Grid -> (Grid -> IO Grid) -> IORef Int -> IO Bool
-evolveEvent can grid f scale=
-  do evolve can grid f scale
+evolveEvent :: DrawingArea -> IORef Cells -> (Cells -> IO Cells) -> IORef Int -> IO Bool
+evolveEvent can cells f scale=
+  do evolve can cells f scale
      return True
 
 updateScale scale value =
