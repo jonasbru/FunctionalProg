@@ -7,9 +7,8 @@ import GOL
 import System.Environment
 
 import Data.IORef
-example2=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,2::Int)]
-example=[(0,-1),(1,-1),(2,-1)]
-example3=[(1,0),(2,0),(3,0),(6,0),(7,0),(1,1),(2,1),(4,1),(6,1),(8,1),(9,1),(10,1),(1,2),(2,2),(3,2),(6,2),(7,2),(8,2),(9,2),(10,2),(0,3),(2,3),(4,3),(6,3),(8,3),(10,3),(0,4),(1,4),(2,4),(3,4),(5,4),(7,4),(9,4),(4,5),(5,5),(6,5),(1,6),(3,6),(5,6),(7,6),(8,6),(9,6),(10,6),(0,7),(2,7),(4,7),(6,7),(8,7),(10,7),(0,8),(1,8),(2,8),(3,8),(4,8),(7,8),(8,8),(9,8),(0,9),(1,9),(2,9),(4,9),(6,9),(8,9),(9,9),(3,10),(4,10),(7,10),(8,10),(9,10)]
+example=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,2::Int)]
+example2=[(0,-1),(1,-1),(2,-1)]
 --need libghc-glib-dev
 --export PATH=$PATH:$HOME/.cabal/bin
 --dans bash.rc modifier PATH pour persistence
@@ -18,11 +17,11 @@ example3=[(1,0),(2,0),(3,0),(6,0),(7,0),(1,1),(2,1),(4,1),(6,1),(8,1),(9,1),(10,
 
 ------------------------------------------------------------------------
 
-sizeX, sizeY, radius, frameSpeed, maxframeSpeed :: Int
+sizeX, sizeY, radius, frameDefaultSpeed, maxframeSpeed :: Int
 sizeX  = 600
 sizeY  = 600
 radius = 1
-frameSpeed = 300
+frameDefaultSpeed = 300
 maxframeSpeed = 1000
 ------------------------------------------------------------------------
 
@@ -58,7 +57,7 @@ main =
      f <-return (evolveEvent can cells (return . nextStep) scale)
 
      -- create timer; this runs the animation
-     _timer <- timeoutAdd (evolveEvent can cells (return . nextStep) scale) frameSpeed
+     _timer <- timeoutAdd (evolveEvent can cells (return . nextStep) scale) frameDefaultSpeed
      timer <-  newIORef (_timer)
 
      -- create Reset button
@@ -68,7 +67,7 @@ main =
      -- create speed button
      stp <- hScaleNewWithRange (fromIntegral 5) (fromIntegral maxframeSpeed) (100)
      adjstp <- rangeGetAdjustment stp
-     adjustmentSetValue adjstp (fromIntegral frameSpeed)
+     adjustmentSetValue adjstp (fromIntegral frameDefaultSpeed)
      stp `onRangeValueChanged`  (do newSpeed <- adjustmentGetValue adjstp;changeTimer timer (round newSpeed) f)
 
 
