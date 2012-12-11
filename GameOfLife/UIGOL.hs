@@ -4,9 +4,10 @@ import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.GC
 import GHC.Float
 import GOL
+import System.Environment
 
 import Data.IORef
-example=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,3::Int)]
+example=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,2::Int)]
 --need libghc-glib-dev
 --export PATH=$PATH:$HOME/.cabal/bin
 --dans bash.rc modifier PATH pour persistence
@@ -18,22 +19,31 @@ example=[(2::Int,0::Int),(2::Int,1::Int),(2::Int,3::Int)]
 sizeX, sizeY, radius, speed :: Int
 sizeX  = 600
 sizeY  = 600
-radius = 10
-speed = 500
+radius = 1
+speed = 100
 ------------------------------------------------------------------------
 
 main :: IO ()
 main =
   do initGUI
 
+     --get the args
+     args <- getArgs
+
+     gridRLE <- case length args of
+        0 -> return example
+        1 -> readGrid (head args)
+        _ -> error "Bad number of arguments !"
+
      -- create main window
      win <- windowNew
      windowSetTitle win "GOL"
      win `onDestroy` mainQuit
-     
+
      -- create abstract widget
-     cells <- newIORef example
-     baseCells <- newIORef example
+
+     cells <- newIORef gridRLE
+     baseCells <- newIORef gridRLE
      scale <- newIORef radius
 
      -- create canvas (drawing area)
@@ -43,10 +53,10 @@ main =
      
      -- create Reset button
      clr <- buttonNewWithLabel "Reset"
-     clr `onClicked`  evolve can cells (\_ -> (do bs <- readIORef baseCells;return bs)) scale
+     clr `onClicked`  evolve can cells (\_ -> readIORef baseCells) scale
 
      -- create Zoom button
-     zoom <- hScaleNewWithRange (fromIntegral radius) 200 (fromIntegral radius)
+     zoom <- hScaleNewWithRange (fromIntegral radius) 30 (fromIntegral radius)
      adj <- rangeGetAdjustment zoom
      zoom `onRangeValueChanged`  (do newZoom <- adjustmentGetValue adj;updateScale scale (round newZoom))
 
@@ -55,7 +65,7 @@ main =
      cls `onClicked` widgetDestroy win
      
      -- create timer; this runs the animation
-     timeoutAdd (evolveEvent can cells (\g -> return (knextStep g)) scale) speed
+     timeoutAdd (evolveEvent can cells (return . knextStep) scale) speed
      
      -- describe layout of all widgets
      buts <- hBoxNew False 5
@@ -100,7 +110,8 @@ evolveEvent can cells f scale=
   do evolve can cells f scale
      return True
 
-updateScale scale value =
-	do writeIORef scale value
+updateScale = writeIORef
+--updateScale scale value =
+--	writeIORef scale value
 ------------------------------------------------------------------------
 

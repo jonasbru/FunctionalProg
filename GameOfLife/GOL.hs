@@ -1,4 +1,15 @@
-module GOL (knextStep,getLivingsCoord,Cells) where
+module GOL (
+	knextStep,
+	nextStep,
+	getLivingsCoord,
+	readGrid,
+	addRows,
+	addCols,
+	addRowsBeginning,
+	addColsBeginning,
+	addRowsAndCols,
+	addRowsAndColsEverywhere,
+	Grid,Cells) where
 
 {- 
 
@@ -15,6 +26,7 @@ import System.Console.ANSI
 import Data.Maybe
 import Parsing
 import Control.Concurrent
+import Control.Arrow
 
 
 type Grid = Matrix Value
@@ -48,7 +60,7 @@ neighborsOffset = [	(-1,-1),(0,-1),(1,-1),
 -- Loop 	####################################################################
 run grid = 	do
 							printGrid grid
-							threadDelay(100000)
+							threadDelay 100000
 							run (nextStep grid)
 
 -- Core #####################################################################
@@ -60,8 +72,9 @@ nextStep grid = [ [ transform (x,y) grid | y <-[0..nbRows-1] ] | x <-[0..nbLines
 
 -- Return the list of neighbors coordinates
 getNeighbors :: Point -> Grid -> [Point]
-getNeighbors (x,y) grid = filter (\a -> isInside a grid) neighbor
-												where neighbor = map (\(dx,dy) -> (x+dx,y+dy)) neighborsOffset
+getNeighbors (x,y) grid = filter (`isInside` grid) neighbor
+	where neighbor = map ((+) x Control.Arrow.*** (+) y) neighborsOffset
+	--where neighbor = map (\(dx,dy) -> (x+dx,y+dy)) neighborsOffset --before hlint.
 
 -- Check if a point is in the grid
 isInside:: Point -> Grid -> Bool
@@ -74,7 +87,7 @@ isInside (a,b) grid | a >= 0 && a < length grid && b >= 0 && b < length (head gr
 
 -- Count how many cells are alive near a cell
 countNextAlive :: Point -> Grid -> Int
-countNextAlive pt grid = length $ filter (\(x,y)->grid!!x!!y==True) (getNeighbors pt grid)
+countNextAlive pt grid = length $ filter (\(x,y)-> grid !! x !! y) (getNeighbors pt grid)
 
 -- Return true if a cell has to die
 hasToDie :: Point -> Grid -> Bool
@@ -96,24 +109,36 @@ transform (x,y) grid	| hasToDie pt grid = False
 												where pt = (x,y)
 
 -- return coordinates of living cells
-getLivingsCoord :: Grid -> [Point]
-getLivingsCoord grid = filter (\(a,b)->grid!!a!!b==True ) (concat [ [ (x,y) | y <- [0..width] ] | x<-[0..heigh] ])
-										where heigh = (length grid) -1;
-													width = (length $ head grid) -1
+getLivingsCoord :: Grid -> Cells
+getLivingsCoord grid = filter (\(a,b)-> grid !! a !! b) (concat [ [ (x,y) | y <- [0..width] ] | x<-[0..heigh] ])
+										where heigh = length grid -1;
+													width = length (head grid) - 1
 	
 -- End Core ##################################################################
 
 -- Jonas #####################################################################
 
 addRows :: Grid -> Int -> Grid
-addRows g i = g ++ (replicate i (replicate (length (g!!0)) False))
+addRows g i = g ++ replicate i (replicate (length (head g)) False)
+
+addRowsBeginning :: Grid -> Int -> Grid
+addRowsBeginning g i = replicate i (replicate (length (head g)) False) ++ g
 
 addCols :: Grid -> Int -> Grid
-addCols g i = transpose ((transpose g) ++ (replicate i (replicate (length ((transpose g)!!0)) False)))
+addCols g i = transpose (transpose g ++ replicate i (replicate (length (head (transpose g))) False))
 
+addColsBeginning :: Grid -> Int -> Grid
+addColsBeginning g i = transpose (replicate i (replicate (length (head (transpose g))) False) ++ transpose g)
+
+addRowsAndCols :: Grid -> Int -> Int -> Grid
+addRowsAndCols g r c = addRows (addCols g c) r
+
+-- rows cols rowsBeginning colsBeginning
+addRowsAndColsEverywhere :: Grid -> Int -> Int -> Int -> Int -> Grid
+addRowsAndColsEverywhere g r c rb cb = addRowsBeginning (addColsBeginning (addRows (addCols g c) r) cb) rb
 
 -- Terminal print ############################################################
-printGrid :: Cells -> IO ()
+printGrid :: Grid -> IO ()
 printGrid g = 
 	do 
 		clearScreen
@@ -129,16 +154,16 @@ toString False = '.'
 
 -- File reader ###############################################################
 
-readGrid :: FilePath -> IO Grid 
+readGrid :: FilePath -> IO Cells 
 readGrid file = do
 	f <- readFile file
 	let l = lines f --Read lines
 	let (l0, l1) = splitAt 1 l -- Get the 1rst line (useless info)
-	let size = read (init ((words (l0!!0)) !! 2))::Int -- Size of the rows
+	let size = read (init (words (head l0) !! 2))::Int -- Size of the rows
 	let ll = init (concat l1) --Reconcat the other lines, and remove the '!' at the end
 	let lin = wordsWhen (=='$') ll --Split the lines by the '$'
 	let ret = [transformLine c size | c <- lin]
-	return ret
+	return (getLivingsCoord ret)
 	
 transformLine :: String -> Int -> Row Value
 transformLine l s = transformLine' l 0 (replicate s False)
@@ -146,20 +171,19 @@ transformLine l s = transformLine' l 0 (replicate s False)
 --Parses the string, and modifies the line starting at the Int char
 transformLine' :: String -> Int -> Row Value -> Row Value
 transformLine' [] _ r = r
-transformLine' l s r = 
-	if isJust num 
-		then if length (snd (fromJust num)) > 0 
-				then if (snd (fromJust num)) !! 0 == 'o' 
-						then transformLine' (tail (snd (fromJust num))) (nb + s) newList
-						else transformLine' (tail (snd (fromJust num))) (nb + s) r
-				else r
-		else if l !! 0 == 'o'
-				then transformLine' (tail l) (s + 1) (r !!= (s, True))
-				else transformLine' (tail l) (s + 1) r
-	where 
-		num = parse (oneOrMore digit) l;
-		newList = r !!!= (s, (replicate nb True));
-		nb = read (fst (fromJust num))
+transformLine' l s r
+    | isJust num =
+      if length (snd (fromJust num)) > 0 then
+        if head (snd (fromJust num)) == 'o' then
+          transformLine' (tail (snd (fromJust num))) (nb + s) newList else
+          transformLine' (tail (snd (fromJust num))) (nb + s) r
+        else r
+    | head l == 'o' = transformLine' (tail l) (s + 1) (r !!= (s, True))
+    | otherwise = transformLine' (tail l) (s + 1) r
+    where num = parse (oneOrMore digit) l
+          newList = r !!!= (s, replicate nb True)
+          nb = read (fst (fromJust num))
+
 	
 
 -- Changes the element at the given position by the given element in a list.
@@ -172,7 +196,7 @@ transformLine' l s r =
 (!!!=) :: [a] -> (Int,[a]) -> [a]
 (!!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
 				| i < 0 = error "Negative index !!"
-				| otherwise = take i l ++ el ++ drop (i+(length el)) l
+				| otherwise = take i l ++ el ++ drop (i+ length el) l
 
 --Split function
 wordsWhen     :: (Char -> Bool) -> String -> [String]
