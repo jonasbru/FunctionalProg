@@ -41,7 +41,7 @@ example2=[(0,-1),(1,-1),(2,-1)]
 
 sizeX, sizeY, radius, frameDefaultSpeed, maxframeSpeed :: Int
 -- Screen resolution
-sizeX  = 600 
+sizeX  = 900 
 sizeY  = 600
 -- Square default size
 radius = 5
