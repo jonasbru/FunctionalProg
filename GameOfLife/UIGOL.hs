@@ -20,6 +20,9 @@
     $> ./UIGOL [File]
     Where file is the path of a RLE Game of Life file
     If you don't provide any file, a test pattern will be loaded
+
+    You can found a lot of RLE files patterns in the wiki conwaylife
+    http://www.conwaylife.com/wiki/
 -}
 
 module Main where

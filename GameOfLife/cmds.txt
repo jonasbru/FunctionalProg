@@ -1,3 +1,5 @@
+#http://www.conwaylife.com/wiki/Main_Page
+
 # oscillator (stationnary)
 ./UIGOL r/doublex.rle
 
