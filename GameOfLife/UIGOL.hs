@@ -40,10 +40,14 @@ example2=[(0,-1),(1,-1),(2,-1)]
 ------------------------------------------------------------------------
 
 sizeX, sizeY, radius, frameDefaultSpeed, maxframeSpeed :: Int
-sizeX  = 600
+-- Screen resolution
+sizeX  = 600 
 sizeY  = 600
-radius = 1
+-- Square default size
+radius = 5
+-- Default move distance on the grid
 move = 50
+-- Default animation speed
 frameDefaultSpeed = 300
 maxframeSpeed = 1000
 ------------------------------------------------------------------------
@@ -66,7 +70,6 @@ main =
      win `onDestroy` mainQuit
 
      -- create Ref
-
      cells <- newIORef gridRLE
      baseCells <- newIORef gridRLE
      scale <- newIORef radius
@@ -76,10 +79,10 @@ main =
      can `onSizeRequest` return (Requisition sizeX sizeY)
      can `onExpose`      (\_ -> evolveEvent can cells return scale)
      
-     -- main function
+     -- evolve function
      let f = (evolveEvent can cells (return . nextStep) scale)
 
-     -- create timer; this runs the animation
+     -- create timer
      _timer <- timeoutAdd (evolveEvent can cells (return . nextStep) scale) frameDefaultSpeed
      timer <-  newIORef _timer
 
@@ -95,8 +98,9 @@ main =
 
 
      -- create Zoom button
-     zoom <- hScaleNewWithRange (fromIntegral radius) 30 (fromIntegral radius)
+     zoom <- hScaleNewWithRange 1 30 1
      adj <- rangeGetAdjustment zoom
+     adjustmentSetValue adj (fromIntegral radius)
      zoom `onRangeValueChanged`  (do newZoom <- adjustmentGetValue adj;writeIORef scale (round newZoom))
 
      -- create Close button     
@@ -113,11 +117,7 @@ main =
      mvLeft `onClicked` moveLeft cells scale
      mvRight `onClicked` moveRight cells scale
 
-
-
      -- describe layout of all widgets
-     
-
      buts <- hBoxNew False 5
      containerAdd buts clr
      containerAdd buts zoom
@@ -157,6 +157,7 @@ draw can bs scale =
   drawSquare dw gc (x,y) r =
     drawRectangle dw gc True (x*r + r `div` 5) (y*r + r `div` 5) (r - r `div` 5 ) (r - r `div` 5)
 
+-- evolve and draw the new living cells
 evolve :: DrawingArea -> IORef Cells -> (Cells -> IO Cells) -> IORef Int-> IO ()
 evolve can cells f scale =
   do bs <- readIORef cells
@@ -164,11 +165,13 @@ evolve can cells f scale =
      writeIORef cells bs'
      draw can bs' scale
 
+-- evolve and draw the new living cells
 evolveEvent :: DrawingArea -> IORef Cells -> (Cells -> IO Cells) -> IORef Int -> IO Bool
 evolveEvent can cells f scale = do
      evolve can cells f scale
      return True
 
+-- change the simulation speed
 changeTimer timer frameSpeed f= do
      htimer <-(readIORef timer)
      timeoutRemove htimer
@@ -196,9 +199,11 @@ moveDown cells scale = do
     scal <- readIORef scale
     (changeIORef cells (translate 0 (-(move `div` scal))))
 
+-- Translate all the cells
 translate ::Int -> Int -> Cells -> IO Cells
 translate dx dy cells = return ( map (\(x,y) -> (x + dx, y + dy)) cells)
 
+-- Transform the value of an IORef
 changeIORef cells f = do
      bs <- readIORef cells
      bs' <- f bs
