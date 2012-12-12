@@ -1,3 +1,7 @@
+#N 3-engine Cordership
+#O Paul Tooke
+#C A diagonal c/12 period 96 3-engine Cordership found on January 12, 2004.
+#C www.conwaylife.com/wiki/index.php?title=3-engine_Cordership
 x = 58, y = 65, rule = b3/s23
 31b3o24b$32bo25b$32bo2bo22b$32bo2bo22b$33bobo22b$48b2o8b$48b2o8b3$32bo
 25b$31bobo24b$32bo25b$49bo8b$48bo7b2o$30b4o22b2o$30b2o3bo10bo11b$31bo

@@ -1,3 +1,7 @@
+#N 400P49
+#C A small period 49 oscillator based off of Noam Elkies' reflector te
+#C chnology
+#C www.conwaylife.com/wiki/index.php?title=400P49
 x = 65, y = 65, rule = b3/s23
 21b2o42b$20bo2bo41b$17bo3bobo41b$15b6obo42b$14bo5bo44b$14bob2obo2bo42b
 $15bo3bob2o42b$17bobo45b$16b2o3b2o42b$15bo2b2obo43b$13bo2bo3bo2bo9bo

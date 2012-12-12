@@ -1,3 +1,7 @@
+#N twogun
+#O V. Everett Boyer and Doug Petrie
+#C The smallest known period-60 gun; it uses two copies of the Gosper 
+#C glider gun.
 x = 39, y = 27, rule = b3/s23
 27bo11b$25bobo11b$15b2o6b2o12b2o$14bo3bo4b2o12b2o$3b2o8bo5bo3b2o14b$3b
 2o8bo3bob2o4bobo11b$13bo5bo7bo11b$14bo3bo20b$15b2o22b$26bo12b$27b2o10b

@@ -1,0 +1,14 @@
+# oscillator (stationnary)
+./UIGOL r/doublex.rle
+
+# Gosper glider gun (fires glidders going downwards rigth)
+./UIGOL r/twogun.rle
+
+# diagonal spaceship (going upper left)
+./UIGOL r/3enginecordership.rle
+
+# orthogonal spaceship (going left)
+./UIGOL r/snail.rle
+
+# Sidecar gun (big stuff :o)
+./UIGOL r/sidecargun.rle
