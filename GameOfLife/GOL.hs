@@ -61,7 +61,8 @@ readGrid :: FilePath -> IO Cells
 readGrid file = do
 	f <- readFile file
 	let l = lines f --Read lines
-	let (l0, l1) = splitAt 1 l -- Get the 1rst line (useless info)
+	let lin = removeComments l
+	let (l0, l1) = splitAt 1 lin -- Get the 1rst line 
 	let size = read (init (words (head l0) !! 2))::Int -- Size of the rows
 	let ll = init (concat l1) --Reconcat the other lines, and remove the '!' at the end
 	let lin = wordsWhen (=='$') ll --Split the lines by the '$'
@@ -96,6 +97,10 @@ transformLine' l s r
     where num     = parse (oneOrMore digit) l
           newList = r !!!= (s, replicate nb True)
           nb      = read (fst (fromJust num))
+
+removeComments :: [String] -> [String]
+removeComments (l0:l) | head l0 == '#' = removeComments l
+					  | otherwise = (l0:l)
 
 
 -- HELPER FCTS ###############################################################
