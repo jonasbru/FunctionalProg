@@ -100,14 +100,14 @@ transformLine' l s r
 
 removeComments :: [String] -> [String]
 removeComments (l0:l) | head l0 == '#' = removeComments l
-					  | otherwise = (l0:l)
+					  | otherwise = l0:l
 
 
 -- HELPER FCTS ###############################################################
 	
 -- Changes the element at the given position by the given element in a list.
 (!!=) :: [a] -> (Int,a) -> [a]
-(!!=) l (i, el) | length l <= i = error ("Index out of bounds !!")
+(!!=) l (i, el) | length l <= i = error "Index out of bounds !!"
 				| i < 0 = error "Negative index !!"
 				| otherwise = take i l ++ [el] ++ drop (i+1) l
 				

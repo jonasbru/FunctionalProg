@@ -74,18 +74,18 @@ main =
      can `onExpose`      (\_ -> evolveEvent can cells return scale)
      
      -- main function
-     f <-return (evolveEvent can cells (return . nextStep) scale)
+     let f = (evolveEvent can cells (return . nextStep) scale)
 
      -- create timer; this runs the animation
      _timer <- timeoutAdd (evolveEvent can cells (return . nextStep) scale) frameDefaultSpeed
-     timer <-  newIORef (_timer)
+     timer <-  newIORef _timer
 
      -- create Reset button
      clr <- buttonNewWithLabel "Reset"
      clr `onClicked`  evolve can cells (\_ -> readIORef baseCells) scale
 
      -- create speed button
-     stp <- hScaleNewWithRange (fromIntegral 5) (fromIntegral maxframeSpeed) (100)
+     stp <- hScaleNewWithRange (fromIntegral 5) (fromIntegral maxframeSpeed) 100
      adjstp <- rangeGetAdjustment stp
      adjustmentSetValue adjstp (fromIntegral frameDefaultSpeed)
      stp `onRangeValueChanged`  (do newSpeed <- adjustmentGetValue adjstp;changeTimer timer (round newSpeed) f)
@@ -168,7 +168,7 @@ evolveEvent can cells f scale = do
 
 changeTimer timer frameSpeed f= do
      htimer <-(readIORef timer)
-     timeoutRemove (htimer)
+     timeoutRemove htimer
      _timer <- timeoutAdd f frameSpeed
      writeIORef timer _timer
 
@@ -194,7 +194,7 @@ moveDown cells scale = do
     (changeIORef cells (translate 0 (-(move `div` scal))))
 
 translate ::Int -> Int -> Cells -> IO Cells
-translate dx dy cells=do return ( map (\(x,y) -> (x + dx, y + dy)) cells)
+translate dx dy cells = return ( map (\(x,y) -> (x + dx, y + dy)) cells)
 
 changeIORef cells f = do
      bs <- readIORef cells
