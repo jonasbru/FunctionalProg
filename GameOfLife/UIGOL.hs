@@ -97,7 +97,7 @@ main =
      -- create Zoom button
      zoom <- hScaleNewWithRange 1 30 1
      adj <- rangeGetAdjustment zoom
-     adjustmentSetValue adjstp (fromIntegral radius)
+     adjustmentSetValue adj (fromIntegral radius)
      zoom `onRangeValueChanged`  (do newZoom <- adjustmentGetValue adj;writeIORef scale (round newZoom))
 
      -- create Close button     
