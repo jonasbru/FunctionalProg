@@ -50,9 +50,7 @@ evolve point actives 2 | point `elem` actives = True
 evolve _ _ 3 = True
 evolve point _ _ = False
 
-neighborsOffset = [	(-1,-1),(0,-1),(1,-1),
-             				(-1, 0),       (1, 0),
-             				(-1, 1),(0, 1),(1, 1)]
+neighborsOffset = [(x,y) | x <- [-1..1], y <- [-1..1], (x,y) /= (0,0)]
 
 -- FILE READER ###############################################################
 
