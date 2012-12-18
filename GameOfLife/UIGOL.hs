@@ -108,29 +108,35 @@ main =
      cls `onClicked` widgetDestroy win
      
      -- create moove button
-     mvUp <- buttonNewWithLabel "Up"
-     mvDown <- buttonNewWithLabel "Down"
-     mvLeft <- buttonNewWithLabel "Left"
-     mvRight <- buttonNewWithLabel "Right"
-     mvUp `onClicked` moveUp cells scale
-     mvDown `onClicked` moveDown cells scale
-     mvLeft `onClicked` moveLeft cells scale
-     mvRight `onClicked` moveRight cells scale
+     buttons <- sequence (map buttonNewWithLabel ["Up","Down","Left","Right"])
+--     mvUp <- buttonNewWithLabel "Up"
+--     mvDown <- buttonNewWithLabel "Down"
+--     mvLeft <- buttonNewWithLabel "Left"
+--     mvRight <- buttonNewWithLabel "Right"
+
+     sequence_ (map (\(x,y)-> onClicked x (y cells scale))  (buttons `zip` [moveUp, moveDown, moveLeft, moveRight]) )     
+--     mvUp `onClicked` moveUp cells scale
+--     mvDown `onClicked` moveDown cells scale
+--     mvLeft `onClicked` moveLeft cells scale
+--     mvRight `onClicked` moveRight cells scale
 
      -- describe layout of all widgets
      buts <- hBoxNew False 5
+--   Can't use list here because clr and zoom have not the same type
      containerAdd buts clr
      containerAdd buts zoom
      containerAdd buts cls
      containerAdd buts stp
      
      butsmv <- hBoxNew False 5
-     containerAdd butsmv mvUp
-     containerAdd butsmv mvDown
-     containerAdd butsmv mvLeft
-     containerAdd butsmv mvRight
+     sequence_ (map (containerAdd butsmv) buttons)
+--     containerAdd butsmv mvUp
+--     containerAdd butsmv mvDown
+--     containerAdd butsmv mvLeft
+--     containerAdd butsmv mvRight
 
      lay <- vBoxNew False 5
+--    Can't use list here because can and buts have not the same type
      containerAdd lay can
      containerAdd lay buts
      containerAdd lay butsmv
