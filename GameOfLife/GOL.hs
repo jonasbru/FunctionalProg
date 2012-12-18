@@ -81,22 +81,45 @@ preTransformLine (l0:l1) size grid =
 transformLine :: String -> Int -> (Row Value, Int)
 transformLine l s = transformLine' l 0 (replicate s False)
 
+--OLD PARSER
+--Parses the string, and modifies the line starting at the Int char
+--transformLine' :: String -> Int -> Row Value -> (Row Value, Int)
+--transformLine' [] _ r = (r,0)
+--transformLine' l s r
+--    | isJust num =													       -- [1-9][bo$]
+--      if length (snd (fromJust num)) > 0                                   
+--        then if head (snd (fromJust num)) == 'o'                           -- [1-9][bo]
+--          then transformLine' (tail (snd (fromJust num))) (nb + s) newList -- [1-9]o
+--          else transformLine' (tail (snd (fromJust num))) (nb + s) r       -- [1-9]b
+--        else (r, nb-1)                                                     -- [1-9]$
+--    | head l == 'o' = transformLine' (tail l) (s + 1) (r !!= (s, True))    -- o
+--    | head l == 'b' = transformLine' (tail l) (s + 1) r                    -- b
+--    | otherwise     =  transformLine' (tail l) s r                         -- ??
+--    where num     = parse (oneOrMore digit) l
+--          newList = r !!!= (s, replicate nb True)
+--          nb      = read (fst (fromJust num))
+
+--NEW PARSER
 --Parses the string, and modifies the line starting at the Int char
 transformLine' :: String -> Int -> Row Value -> (Row Value, Int)
 transformLine' [] _ r = (r,0)
 transformLine' l s r
-    | isJust num =													       -- [1-9][bo$]
-      if length (snd (fromJust num)) > 0                                   
-        then if head (snd (fromJust num)) == 'o'                           -- [1-9][bo]
-          then transformLine' (tail (snd (fromJust num))) (nb + s) newList -- [1-9]o
-          else transformLine' (tail (snd (fromJust num))) (nb + s) r       -- [1-9]b
-        else (r, nb-1)                                                     -- [1-9]$
-    | head l == 'o' = transformLine' (tail l) (s + 1) (r !!= (s, True))    -- o
-    | head l == 'b' = transformLine' (tail l) (s + 1) r                    -- b
-    | otherwise     =  transformLine' (tail l) s r                         -- ??
-    where num     = parse (oneOrMore digit) l
-          newList = r !!!= (s, replicate nb True)
-          nb      = read (fst (fromJust num))
+	| isJust moreO = transformLine' (snd (fromJust moreO)) ((nb moreO) + s) (newList moreO)
+	| isJust moreB = transformLine' (snd (fromJust moreB)) ((nb moreB) + s) r
+	| isJust oneO  = transformLine' (snd (fromJust oneO))  (s + 1)  (r !!= (s, True))
+	| isJust oneB  = transformLine' (snd (fromJust oneB))  (s + 1)  r
+	| isJust moreLines = (r, (nb moreLines)-1)
+	where
+		moreO      = parse (oneOrMore digit <-< char 'o') l
+		moreB      = parse (oneOrMore digit <-< char 'b') l
+		oneO       = parse (char 'o') l
+		oneB       = parse (char 'b') l
+		moreLines  = parse (oneOrMore digit) l
+		nb n       = read (fst (fromJust n))
+		newList m  = r !!!= (s, replicate (nb m) True)
+
+
+
 
 removeComments :: [String] -> [String]
 removeComments (l0:l) | head l0 == '#' = removeComments l
