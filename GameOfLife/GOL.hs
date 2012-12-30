@@ -124,6 +124,31 @@ removeComments (l0:l) | head l0 == '#' = removeComments l
 					  | otherwise = l0:l
 
 
+-- FILE READER V 2.0 #########################################################
+-- Thanks to that parser : haskell parsers knowledge++; christmas family time--
+
+--caca :: FilePath -> IO String
+--caca file = do
+--	f <- readFile file
+--	p <- parse $ skipComments f
+--	return snd (fromJust p)
+
+
+----parseThatFile :: Parser (Matrix Bool)
+----parseThatFile 
+
+----parseLine :: Parser (Row Bool)
+
+--skipComments :: Parser ()
+--skipComments = do
+--	zeroOrMore (char '#') 
+--	zeroOrMore (sat (/='\n'))
+--	char '\n'
+--	return ()
+
+
+
+
 -- HELPER FCTS ###############################################################
 	
 -- Changes the element at the given position by the given element in a list.
