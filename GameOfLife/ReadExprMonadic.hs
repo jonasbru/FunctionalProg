@@ -43,12 +43,12 @@ num  = pmap Num integer
 chain p c f = -- pmap (foldr1 f) $ p <:> zeroOrMore (char c >-> p )
          do a <- p 
             char c
-            e <- chain p c f 
+            e <- ReadExprMonadic.chain p c f 
             return $ f a e
          +++ p 
 
-expr   = chain term '+' Add
-term   = chain factor '*' Mul
+expr   = ReadExprMonadic.chain term '+' Add
+term   = ReadExprMonadic.chain factor '*' Mul
 
 factor = -- char '(' >-> expr <-< char ')' +++ num
     do char '('   

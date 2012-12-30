@@ -57,15 +57,17 @@ neighborsOffset = [(x,y) | x <- [-1..1], y <- [-1..1], (x,y) /= (0,0)]
 -- Reads a RLE file and returns the corresponding cells
 readGrid :: FilePath -> IO Cells 
 readGrid file = do
-	f <- readFile file
-	let l = lines f --Read lines
-	let lin = removeComments l
-	let (l0, l1) = splitAt 1 lin -- Get the 1rst line 
-	let size = read (init (words (head l0) !! 2))::Int -- Size of the rows
-	let ll = init (concat l1) --Reconcat the other lines, and remove the '!' at the end
-	let lin = wordsWhen (=='$') ll --Split the lines by the '$'
-	let ret = preTransformLine lin size []			--let ret = [transformLine c size | c <- lin]
-	return (getLivingsCoord ret)
+	a <- caca file
+	return (getLivingsCoord a)
+	--f <- readFile file
+	--let l = lines f --Read lines
+	--let lin = removeComments l
+	--let (l0, l1) = splitAt 1 lin -- Get the 1rst line 
+	--let size = read (init (words (head l0) !! 2))::Int -- Size of the rows
+	--let ll = init (concat l1) --Reconcat the other lines, and remove the '!' at the end
+	--let lin = wordsWhen (=='$') ll --Split the lines by the '$'
+	--let ret = preTransformLine lin size []			--let ret = [transformLine c size | c <- lin]
+	--return (getLivingsCoord ret)
 
 -- Helper fct to process the lines
 preTransformLine :: [String] -> Int -> Grid -> Grid
@@ -97,7 +99,7 @@ transformLine l s = transformLine' l 0 (replicate s False)
 --          newList = r !!!= (s, replicate nb True)
 --          nb      = read (fst (fromJust num))
 
---NEW PARSER
+--NEW PARSER (BUT NOT SO NEW, NEWER VERSION BELOW..)
 --Parses the string, and modifies the line starting at the Int char
 transformLine' :: String -> Int -> Row Value -> (Row Value, Int)
 transformLine' [] _ r = (r,0)
@@ -127,23 +129,74 @@ removeComments (l0:l) | head l0 == '#' = removeComments l
 -- FILE READER V 2.0 #########################################################
 -- Thanks to that parser : haskell parsers knowledge++; christmas family time--
 
-caca :: FilePath -> IO String
+caca :: FilePath -> IO (Matrix Bool)
 caca file = do
 	f <- readFile file
-	let p = parse (zeroOrMore skipComments) f 
-	return (snd (fromJust p))
+	let p = parse parseHeader f 
+	let c = (snd (fromJust p))
+	let b = (filter (\a -> a /= '\r' && a /= '\n')) c
+	let d = parse parseThatFile b
+	return (fst (fromMaybe ([],"Empty") d))
+
+parseHeader :: Parser ()
+parseHeader = do
+	zeroOrMore skipCommentLine
+	skipUntilEOL
 
 
-----parseThatFile :: Parser (Matrix Bool)
-----parseThatFile 
 
-----parseLine :: Parser (Row Bool)
+parseThatFile :: Parser (Matrix Bool)
+parseThatFile = do
+	let a = chain parseLine (char '$')
+	pmap (\b -> concat b) a
 
-skipComments :: Parser ()
-skipComments = do
+
+parseLine :: Parser ([Row Bool])
+parseLine = do
+	let a = choices <:> zeroOrMore choices
+	let c = pmap (\b -> [concat b]) a
+	let e = pmap (\f -> [f]) moreLines
+	pmap (\d -> concat d) (c <:> e)
+
+choices :: Parser (Row Bool)
+choices = oneO Parsing.+++ oneB Parsing.+++ moreO Parsing.+++ moreB
+
+oneO :: Parser (Row Bool)
+oneO = do
+	char 'o'
+	return [True]
+
+oneB :: Parser (Row Bool)
+oneB = do
+	char 'b'
+	return [False]
+
+moreO :: Parser (Row Bool)
+moreO = do
+	let a = oneOrMore digit <-< char 'o'
+	pmap (\b -> replicate (read b) True) a
+
+moreB :: Parser (Row Bool)
+moreB = do
+	let a = oneOrMore digit <-< char 'b'
+	pmap (\b -> replicate (read b) False) a
+
+moreLines :: Parser ([Row Bool])
+moreLines = 
+	do
+		let a = oneOrMore digit
+		pmap (\b -> replicate ((read b) -1) []) a
+	Parsing.+++ success []
+
+skipCommentLine :: Parser ()
+skipCommentLine = do
 	char '#'
+	skipUntilEOL
+	return ()
+
+skipUntilEOL :: Parser ()
+skipUntilEOL = do
 	zeroOrMore (sat (\s -> s /= '\r' && s /= '\n'))
-	--zeroOrMore (char '\r' >-> char '\n' Parsing.+++ char '\n')
 	(char '\r' >-> char '\n') Parsing.+++ char '\n'
 	return ()
 
@@ -174,6 +227,6 @@ wordsWhen p s = case dropWhile p s of
 -- Return coordinate of living cells in a grid
 getLivingsCoord :: Grid -> Cells
 getLivingsCoord grid = 
-	filter (\(a,b)-> grid !! b !! a) (concat [ [ (y,x) | y <- [0..width] ] | x<-[0..heigh] ])
+	filter (\(a,b)-> a < length (grid !! b) && grid !! b !! a) (concat [ [ (y,x) | y <- [0..width] ] | x<-[0..heigh] ])
 	where heigh = length grid -1;
-		  width = length (head grid) - 1
+		  width = maximum [length g - 1 | g <- grid]
