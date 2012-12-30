@@ -127,11 +127,11 @@ removeComments (l0:l) | head l0 == '#' = removeComments l
 -- FILE READER V 2.0 #########################################################
 -- Thanks to that parser : haskell parsers knowledge++; christmas family time--
 
---caca :: FilePath -> IO String
---caca file = do
---	f <- readFile file
---	p <- parse $ skipComments f
---	return snd (fromJust p)
+caca :: FilePath -> IO String
+caca file = do
+	f <- readFile file
+	let p = parse (zeroOrMore skipComments) f 
+	return (snd (fromJust p))
 
 
 ----parseThatFile :: Parser (Matrix Bool)
@@ -139,12 +139,13 @@ removeComments (l0:l) | head l0 == '#' = removeComments l
 
 ----parseLine :: Parser (Row Bool)
 
---skipComments :: Parser ()
---skipComments = do
---	zeroOrMore (char '#') 
---	zeroOrMore (sat (/='\n'))
---	char '\n'
---	return ()
+skipComments :: Parser ()
+skipComments = do
+	char '#'
+	zeroOrMore (sat (\s -> s /= '\r' && s /= '\n'))
+	--zeroOrMore (char '\r' >-> char '\n' Parsing.+++ char '\n')
+	(char '\r' >-> char '\n') Parsing.+++ char '\n'
+	return ()
 
 
 
