@@ -5,8 +5,6 @@
 
     Chalmers -- Functional Programming -- Lab Assignment 4
     Michael Fagno && Jonas Bru
-    
-    The file was run through hlint without warnings 
 
     See UIGOL.hs for launching and commands
 -}
@@ -57,7 +55,7 @@ neighborsOffset = [(x,y) | x <- [-1..1], y <- [-1..1], (x,y) /= (0,0)]
 -- Reads a RLE file and returns the corresponding cells
 readGrid :: FilePath -> IO Cells 
 readGrid file = do
-	a <- caca file
+	a <- parseRLE file
 	return (getLivingsCoord a)
 	--f <- readFile file
 	--let l = lines f --Read lines
@@ -127,10 +125,13 @@ removeComments (l0:l) | head l0 == '#' = removeComments l
 
 
 -- FILE READER V 2.0 #########################################################
--- Thanks to that parser : haskell parsers knowledge++; christmas family time--
 
-caca :: FilePath -> IO (Matrix Bool)
-caca file = do
+--It there is another way of removing something, like all the endOfLines
+--in a file, in the parser itself, I'm very interested to know how.
+--In the ReadExprMonadic.hs file, the filter method before parsing is used, i used the same here,
+--but here i remove the header first, using another parser.
+parseRLE :: FilePath -> IO (Matrix Bool)
+parseRLE file = do
 	f <- readFile file
 	let p = parse parseHeader f 
 	let c = (snd (fromJust p))
